@@ -20,6 +20,7 @@ npm run build
 
 ไม่ย้าย (ผูกกับระบบอบรม): QuestionEditor, Wizard, AdminShell, users/*
 | 4 | BlobArt (LoginBackdrop, LoginPattern, AdminLoginBackdrop, HeroPattern), admin/ImagePicker, เส้นเชื่อมไหล `.flow-line` (อยู่ใน globals.css) | ย้ายแล้ว |
+| 5 | OtpInput, admin/PasswordFields (PasswordInput, PasswordRules) | ย้ายแล้ว |
 
 ## ข้อตัดสินใจ
 - ไม่ย้าย `LangSwitch` (ผูกกับ `POST /api/lang` + cookie ของต้นทาง) ใช้ `PillSwitch` ต่อกับกลไกสลับภาษาของแอปปลายทางเอง

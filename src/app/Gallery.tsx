@@ -16,6 +16,8 @@ import { RowMenu } from '@/components/admin/RowMenu';
 import { Pencil, Trash2 } from 'lucide-react';
 import { LoginBackdrop, LoginPattern, AdminLoginBackdrop, HeroPattern } from '@/components/BlobArt';
 import { ImagePicker } from '@/components/admin/ImagePicker';
+import { OtpInput } from '@/components/OtpInput';
+import { PasswordInput, PasswordRules } from '@/components/admin/PasswordFields';
 import { Avatar } from '@/components/Avatar';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ProgressRing } from '@/components/ProgressRing';
@@ -61,6 +63,9 @@ export function Gallery() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [img, setImg] = useState<string | null>(null);
+  const [otp, setOtp] = useState('');
+  const [pw, setPw] = useState('');
+  const [pw2, setPw2] = useState('');
   const [dlg, setDlg] = useState(false);
   const [drw, setDrw] = useState(false);
   const rows = Array.from({ length: 25 }, (_, i) => ({ id: i + 1, name: `คอร์ส ${i + 1}`, st: ['published', 'draft', 'archived'][i % 3], n: (i + 1) * 7 }))
@@ -207,6 +212,21 @@ export function Gallery() {
           <span className="flow-line mx-1 h-0.5 flex-1" />
           <span className="flow-head h-0 w-0 border-y-[6px] border-l-[9px] border-y-transparent" />
           <span className="ml-1 flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 font-bold text-white">2</span>
+        </div>
+      </Section>
+
+      <Section title="OtpInput / PasswordInput / PasswordRules">
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div className="space-y-2">
+            <OtpInput value={otp} onChange={setOtp} onComplete={(v) => toast.success(`OTP ${v}`)} autoFocus={false} />
+            <p className="text-center text-xs text-ink-mute">ลองวางรหัส 6 หลักทีเดียว</p>
+            <OtpInput value="12" onChange={() => {}} invalid autoFocus={false} />
+          </div>
+          <div className="space-y-3">
+            <Field label="รหัสผ่านใหม่" as="div"><PasswordInput value={pw} onChange={setPw} autoComplete="new-password" /></Field>
+            <Field label="ยืนยันรหัสผ่าน" as="div"><PasswordInput value={pw2} onChange={setPw2} autoComplete="new-password" /></Field>
+            <PasswordRules next={pw} again={pw2} />
+          </div>
         </div>
       </Section>
 
