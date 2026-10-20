@@ -4,7 +4,7 @@
 Stack: Next.js 15 · React 19 · Tailwind 3.4 · framer-motion · lucide-react · i18n ไทย/อังกฤษ (ย้าย `src/lib/i18n` มาทั้งโฟลเดอร์)
 
 ```bash
-npm run dev     # http://localhost:3200 (หน้า Gallery)
+npm run dev     # http://localhost:3400 (หน้า Gallery)
 npm run build
 ```
 
@@ -22,6 +22,7 @@ npm run build
 
 ## ข้อตัดสินใจ
 - ไม่ย้าย `LangSwitch` (ผูกกับ `POST /api/lang` + cookie ของต้นทาง) ใช้ `PillSwitch` ต่อกับกลไกสลับภาษาของแอปปลายทางเอง
+- hydration error #418 ที่เคยเห็นตอนทดสอบ ไม่ใช่บั๊กของโค้ด: ตรวจซ้ำบนพอร์ตใหม่แล้วไม่มี ที่เห็นมาจาก origin `localhost:3200` ซึ่งใช้ร่วมกับโปรเจกต์อื่น (เลยเปลี่ยนพอร์ตเริ่มต้นเป็น 3400)
 - `<FeedbackHost />` ต้อง mount ครั้งเดียวที่ root layout (ทำไว้แล้วใน `src/app/layout.tsx`)
 - `Field` ยังมี selector `[data-bank-picker]` ที่เป็นของเฉพาะระบบต้นทาง (ไม่เป็นอันตราย คงไว้ตามโค้ดเดิม)
 - `Drawer` ในต้นทางไม่มี `role`/`aria-modal` (ต่างจาก `Dialog`) ซึ่งขัดกับข้อตกลง "role/aria ครบ" ใน README ต้นทาง ยังไม่ได้แก้ ย้ายตามโค้ดเดิม
