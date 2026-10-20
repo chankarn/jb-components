@@ -19,6 +19,7 @@ npm run build
 | 3b | admin/kit.tsx (DataTable, Toolbar, FilterSelect, Pagination, Drawer, Dialog, SectionCard, StatCard, AdminPageHeader, InfoNote), Table.tsx, admin/RowMenu.tsx | ย้ายแล้ว |
 
 ไม่ย้าย (ผูกกับระบบอบรม): QuestionEditor, Wizard, AdminShell, users/*
+| 4 | BlobArt (LoginBackdrop, LoginPattern, AdminLoginBackdrop, HeroPattern), admin/ImagePicker, เส้นเชื่อมไหล `.flow-line` (อยู่ใน globals.css) | ย้ายแล้ว |
 
 ## ข้อตัดสินใจ
 - ไม่ย้าย `LangSwitch` (ผูกกับ `POST /api/lang` + cookie ของต้นทาง) ใช้ `PillSwitch` ต่อกับกลไกสลับภาษาของแอปปลายทางเอง
@@ -26,3 +27,5 @@ npm run build
 - `<FeedbackHost />` ต้อง mount ครั้งเดียวที่ root layout (ทำไว้แล้วใน `src/app/layout.tsx`)
 - `Field` ยังมี selector `[data-bank-picker]` ที่เป็นของเฉพาะระบบต้นทาง (ไม่เป็นอันตราย คงไว้ตามโค้ดเดิม)
 - `Drawer` ในต้นทางไม่มี `role`/`aria-modal` (ต่างจาก `Dialog`) ซึ่งขัดกับข้อตกลง "role/aria ครบ" ใน README ต้นทาง ยังไม่ได้แก้ ย้ายตามโค้ดเดิม
+- `ImagePicker` แก้จากต้นทาง: รับ `upload(file) => Promise<string>` และ `resolveUrl(value) => string` เป็น props (ต้นทางเรียก endpoint อัปโหลดของระบบอบรมตรงๆ)
+- `tailwind.config.ts` เพิ่ม `opacity: { 8: "0.08" }` — **ต้นทางมีบั๊ก:** ใช้ `bg-ink/8`, `border-ink/8` ฯลฯ ราว 46 จุด (Skeleton, Chip mute, ราง Progress, StatusBadge not_started, เส้นแถวตาราง) แต่สเกล opacity ของ Tailwind ไม่มี 8 คลาสเหล่านั้นเลยไม่ถูกสร้างและมองไม่เห็นในต้นทางด้วย ที่นี่แก้แล้ว

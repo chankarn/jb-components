@@ -14,6 +14,8 @@ import { toast, confirmDialog } from '@/components/feedback';
 import { DataTable, Toolbar, FilterSelect, Pagination, Dialog, Drawer, SectionCard, StatCard, AdminPageHeader, InfoNote } from '@/components/admin/kit';
 import { RowMenu } from '@/components/admin/RowMenu';
 import { Pencil, Trash2 } from 'lucide-react';
+import { LoginBackdrop, LoginPattern, AdminLoginBackdrop, HeroPattern } from '@/components/BlobArt';
+import { ImagePicker } from '@/components/admin/ImagePicker';
 import { Avatar } from '@/components/Avatar';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ProgressRing } from '@/components/ProgressRing';
@@ -58,6 +60,7 @@ export function Gallery() {
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+  const [img, setImg] = useState<string | null>(null);
   const [dlg, setDlg] = useState(false);
   const [drw, setDrw] = useState(false);
   const rows = Array.from({ length: 25 }, (_, i) => ({ id: i + 1, name: `คอร์ส ${i + 1}`, st: ['published', 'draft', 'archived'][i % 3], n: (i + 1) * 7 }))
@@ -115,7 +118,7 @@ export function Gallery() {
           </div>
           <div className="flex gap-2">{(['brand', 'dark', 'mute', 'done'] as const).map((t) => <Chip key={t} tone={t}>{t}</Chip>)}</div>
           <Card>Card</Card>
-          <Progress percent={60} /><Skeleton className="h-6 w-40" />
+          <Progress percent={60} /><Skeleton className="h-6 w-40" /><Skeleton className="h-16 w-full" />
           <Empty text="Empty (card)" description="ย่อจาก EmptyState" />
         </div>
       </Section>
@@ -181,6 +184,30 @@ export function Gallery() {
         <Drawer open={drw} title="รายละเอียด" onClose={() => setDrw(false)} footer={<Button variant="outline" onClick={() => setDrw(false)}>ปิด</Button>}>
           <p className="text-sm">เนื้อหายาว</p>
         </Drawer>
+      </Section>
+
+      <Section title="ImagePicker (ส่ง upload / resolveUrl เอง)">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <ImagePicker value={img} onChange={setImg} upload={async (f) => URL.createObjectURL(f)} resolveUrl={(v) => v} />
+          <ImagePicker value={null} onChange={() => {}} size="sm" label="แนบรูป" upload={async () => { throw new Error('อัปโหลดไม่สำเร็จ (ตัวอย่าง error)'); }} resolveUrl={(v) => v} />
+        </div>
+      </Section>
+
+      <Section title="BlobArt: Backdrops / Patterns">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {[['LoginBackdrop', <LoginBackdrop key="a" />], ['LoginPattern + Backdrop', <><LoginBackdrop /><LoginPattern /></>], ['AdminLoginBackdrop', <AdminLoginBackdrop key="c" />], ['HeroPattern', <HeroPattern key="d" h={220} />]].map(([n, el]) => (
+            <div key={n as string} className="relative h-56 overflow-hidden rounded-card border border-ink/10 bg-surface">{el}<span className="absolute left-3 top-3 rounded-pill bg-surface/90 px-2 py-0.5 text-[11px] font-semibold">{n as string}</span></div>
+          ))}
+        </div>
+      </Section>
+
+      <Section title="เส้นเชื่อมไหล (.flow-line) — ชี้เมาส์ที่เส้น">
+        <div className="flow-chain flex items-center py-4">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 font-bold text-white">1</span>
+          <span className="flow-line mx-1 h-0.5 flex-1" />
+          <span className="flow-head h-0 w-0 border-y-[6px] border-l-[9px] border-y-transparent" />
+          <span className="ml-1 flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 font-bold text-white">2</span>
+        </div>
       </Section>
 
       <Section title="Avatar">
