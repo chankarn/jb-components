@@ -7,6 +7,9 @@ import { ThemeToggle } from '@/components/ThemeProvider';
 import { HelpTip } from '@/components/HelpTip';
 import { EmptyState } from '@/components/EmptyState';
 import { ZoomImage } from '@/components/MediaLightbox';
+import { Avatar } from '@/components/Avatar';
+import { StatusBadge } from '@/components/StatusBadge';
+import { ProgressRing } from '@/components/ProgressRing';
 
 const SCALES: [string, string[]][] = [
   ['brand', ['50', '100', '200', '300', '400', '500', '600', '700']],
@@ -84,6 +87,23 @@ export function Gallery() {
 
       <Section title="HelpTip">
         <p className="flex items-center gap-1 text-sm">ชื่อคอร์ส <HelpTip text="คำอธิบายที่ยาวกว่าหนึ่งบรรทัด กดไอคอนเพื่อเปิด ปิดด้วย Esc หรือคลิกนอกกล่อง" /></p>
+      </Section>
+
+      <Section title="Avatar">
+        <div className="flex items-center gap-3">
+          {['สมชาย', 'Anna', 'Bo', 'ฟ้า', 'Kim', 'Zed', 'Mai'].map((n, i) => <Avatar key={n} name={n} seed={i} />)}
+          <Avatar name="Muted" seed={1} muted />
+        </div>
+      </Section>
+
+      <Section title="StatusBadge">
+        <div className="flex flex-wrap gap-2">
+          {['passed', 'in_progress', 'not_started', 'draft', 'overdue', 'failed', 'active', 'suspended', 'unknown_status'].map((s) => <StatusBadge key={s} status={s} />)}
+        </div>
+      </Section>
+
+      <Section title="ProgressRing">
+        <div className="flex items-center gap-4"><ProgressRing percent={0} /><ProgressRing percent={42} /><ProgressRing percent={100} size={80} stroke={9} /></div>
       </Section>
 
       <Section title="EmptyState">
