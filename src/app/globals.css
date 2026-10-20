@@ -1,0 +1,166 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ฟอนต์ self-host (OFL) — ไม่มีคำขอไปภายนอก ใช้ได้บนเครื่องลูกค้าที่ออกอินเทอร์เน็ตไม่ได้ */
+@font-face { font-family: 'Kanit'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/kanit-thai-500.woff2') format('woff2'); unicode-range: U+0E01-0E5B,U+200C-200D,U+25CC; }
+@font-face { font-family: 'Kanit'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/kanit-latin-500.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Kanit'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/kanit-thai-600.woff2') format('woff2'); unicode-range: U+0E01-0E5B,U+200C-200D,U+25CC; }
+@font-face { font-family: 'Kanit'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/kanit-latin-600.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Kanit'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/kanit-thai-700.woff2') format('woff2'); unicode-range: U+0E01-0E5B,U+200C-200D,U+25CC; }
+@font-face { font-family: 'Kanit'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/kanit-latin-700.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Anuphan'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/anuphan-thai-300.woff2') format('woff2'); unicode-range: U+0E01-0E5B,U+200C-200D,U+25CC; }
+@font-face { font-family: 'Anuphan'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/anuphan-latin-300.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Anuphan'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/anuphan-thai-400.woff2') format('woff2'); unicode-range: U+0E01-0E5B,U+200C-200D,U+25CC; }
+@font-face { font-family: 'Anuphan'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/anuphan-latin-400.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Anuphan'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/anuphan-thai-500.woff2') format('woff2'); unicode-range: U+0E01-0E5B,U+200C-200D,U+25CC; }
+@font-face { font-family: 'Anuphan'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/anuphan-latin-500.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Anuphan'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/anuphan-thai-600.woff2') format('woff2'); unicode-range: U+0E01-0E5B,U+200C-200D,U+25CC; }
+@font-face { font-family: 'Anuphan'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/anuphan-latin-600.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+
+/*
+ * โทนสี (ค่าเป็น "R G B" เพื่อให้ Tailwind ใส่ opacity ได้ เช่น bg-ink/10)
+ * หน้าบ้านผู้เรียน : แดง-ขาวของ CP-Meiji  | หลังบ้าน : Cerulean (ดู body:has ด้านล่าง)
+ */
+:root {
+  color-scheme: light;
+
+  /* แดงแบรนด์ — 500 = #FF0000, 600 = #D60000 (ขาวบนสีนี้ 5.4:1) */
+  --brand-50: 255 240 240;
+  --brand-100: 255 224 224;
+  --brand-200: 255 194 194;
+  --brand-300: 255 143 143;
+  --brand-400: 255 82 82;
+  --brand-500: 255 0 0;
+  --brand-600: 214 0 0;
+  --brand-700: 168 0 0;
+
+  /* ตัวอักษร: Space Indigo / เทากลาง · พื้นหลังเทาอ่อน */
+  --ink: 37 31 71;          /* #251F47 */
+  --ink-soft: 75 70 102;    /* #4B4666 */
+  --ink-mute: 107 107 123;  /* #6B6B7B */
+  --paper: 245 245 247;     /* #F5F5F7 */
+  --surface: 255 255 255;   /* พื้นการ์ด/ช่องกรอก */
+  --brand-link: 214 0 0;    /* สีแบรนด์ที่เป็นตัวหนังสือ/ลิงก์ (dark mode ปรับให้สว่างขึ้น) */
+
+  /* สำเร็จ: Seaweed (#00B295 ใช้เป็นพื้น/ไอคอน, 600-700 ใช้เป็นตัวหนังสือ) */
+  --ok-50: 227 246 242;
+  --ok-500: 0 178 149;
+  --ok-600: 0 128 107;
+  --ok-700: 0 102 84;
+
+  /* เตือน: เหลืองอำพัน #F5A623 */
+  --warn-50: 255 245 224;
+  --warn-500: 245 166 35;
+  --warn-600: 184 116 0;
+  --warn-700: 138 86 0;
+
+  /* ผิดพลาด: แดงเข้ม #C62828 แยกจากแดงแบรนด์ */
+  --danger-50: 253 236 236;
+  --danger-100: 250 212 212;
+  --danger-500: 224 69 69;
+  --danger-600: 198 40 40;
+  --danger-700: 158 31 31;
+}
+
+/*
+ * หลังบ้าน: เปลี่ยนสี brand เป็น Cerulean #006989 (600) — ตั้งที่ body เพราะ Drawer/Modal
+ * ถูก portal ออกไปอยู่ใต้ <body> ถ้าตั้งที่ wrapper ของหน้า สีจะไม่ตามไปด้วย
+ */
+body:has([data-surface='admin']) {
+  --brand-50: 232 244 248;
+  --brand-100: 209 233 241;
+  --brand-200: 163 211 227;
+  --brand-300: 117 189 213;
+  --brand-400: 63 163 194;
+  --brand-500: 10 134 171;
+  --brand-600: 0 105 137;
+  --brand-700: 0 77 102;
+  --paper: 241 244 247;     /* เทาอมฟ้านิดๆ ให้ต่างจากฝั่งผู้เรียน */
+  --brand-link: 0 105 137;
+}
+
+:root {
+  --login-bg: var(--surface);
+  --blob-opacity: 1;
+}
+
+/*
+ * Dark mode — ค่าตาม docs/program/DESIGN_SYSTEM.md · ThemeProvider ตั้ง data-theme="dark|light" บน <html>
+ * ค่าเริ่มต้นคือสว่าง (ไม่ตามธีมของเครื่อง)
+ */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --login-bg: var(--paper);
+  --blob-opacity: 0.5;
+  --paper: 20 18 31;
+  --surface: 30 27 46;
+  --ink: 242 241 247;
+  --ink-soft: 201 198 214;
+  --ink-mute: 160 157 179;
+  --brand-50: 58 20 24;
+  --brand-100: 77 25 30;
+  --brand-200: 110 30 36;
+  --brand-link: 255 107 107;
+  --ok-50: 15 51 46;
+  --ok-600: 61 214 184;
+  --ok-700: 61 214 184;
+  --warn-50: 58 43 15;
+  --warn-600: 245 184 74;
+  --warn-700: 245 184 74;
+  --danger-50: 58 26 31;
+  --danger-100: 77 30 36;
+  --danger-600: 255 138 138;
+  --danger-700: 255 138 138;
+}
+:root[data-theme='dark'] body:has([data-surface='admin']) {
+  --paper: 20 18 31;
+  --brand-50: 15 40 50;
+  --brand-100: 20 55 68;
+  --brand-200: 30 80 98;
+  --brand-link: 92 184 214;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .theme-fade,
+  .theme-fade *,
+  .theme-fade *::before,
+  .theme-fade *::after {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, fill 0.3s ease, stroke 0.3s ease, opacity 0.3s ease !important;
+  }
+}
+
+body {
+  @apply bg-paper font-sans text-ink antialiased;
+}
+
+h1, h2, h3 {
+  @apply font-display;
+}
+
+/* ซ่อน scrollbar ของแถบ tab แนวนอน */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ปิด native control ของ <video> ที่ทำให้ลาก timeline ข้ามได้ (N29) */
+video.no-skip::-webkit-media-controls-timeline { display: none !important; }
+video.no-skip::-webkit-media-controls-seek-back-button,
+video.no-skip::-webkit-media-controls-seek-forward-button { display: none !important; }
+
+/* เส้นเชื่อมขั้น Prerequisite: เส้นประจางไหลช้าตลอด · ชี้เมาส์ที่สาย (.flow-chain) แล้วเข้มขึ้นและไหลเร็วขึ้น */
+.flow-line {
+  --flow-c: rgb(var(--brand-500) / 0.4);
+  background-image: repeating-linear-gradient(90deg, var(--flow-c) 0 6px, transparent 6px 12px);
+  background-size: 24px 100%;
+  animation: flow-march 2s linear infinite;
+}
+.flow-head { border-left-color: rgb(var(--brand-500) / 0.4); transition: border-color .25s; }
+.flow-chain:hover .flow-line { --flow-c: rgb(var(--brand-500)); animation-duration: .8s; }
+.flow-chain:hover .flow-head { border-left-color: rgb(var(--brand-500)); }
+@keyframes flow-march { to { background-position: 24px 0; } }
