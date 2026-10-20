@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { getLang } from '@/lib/i18n/server';
 import { I18nProvider } from '@/lib/i18n/client';
+import { FeedbackHost } from '@/components/feedback';
 import { ThemeProvider, THEME_INIT_SCRIPT } from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
@@ -18,7 +19,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <I18nProvider lang={lang}>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>{children}<FeedbackHost /></ThemeProvider>
         </I18nProvider>
       </body>
     </html>

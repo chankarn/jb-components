@@ -7,6 +7,10 @@ import { ThemeToggle } from '@/components/ThemeProvider';
 import { HelpTip } from '@/components/HelpTip';
 import { EmptyState } from '@/components/EmptyState';
 import { ZoomImage } from '@/components/MediaLightbox';
+import { Button, Card, Chip, Field, Input, Textarea, Progress, Skeleton, Empty } from '@/components/ui';
+import { Select } from '@/components/Select';
+import { DatePicker } from '@/components/DatePicker';
+import { toast, confirmDialog } from '@/components/feedback';
 import { Avatar } from '@/components/Avatar';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ProgressRing } from '@/components/ProgressRing';
@@ -44,6 +48,9 @@ export function Gallery() {
   const [tab, setTab] = useState('all');
   const [sw, setSw] = useState<0 | 1>(0);
   const [admin, setAdmin] = useState(false);
+  const [sel, setSel] = useState('a');
+  const [date, setDate] = useState('');
+  const [name, setName] = useState('');
   return (
     <div {...(admin ? { 'data-surface': 'admin' } : {})} className="mx-auto max-w-4xl space-y-5 p-6">
       <header className="flex items-center justify-between gap-3">
@@ -87,6 +94,43 @@ export function Gallery() {
 
       <Section title="HelpTip">
         <p className="flex items-center gap-1 text-sm">ชื่อคอร์ส <HelpTip text="คำอธิบายที่ยาวกว่าหนึ่งบรรทัด กดไอคอนเพื่อเปิด ปิดด้วย Esc หรือคลิกนอกกล่อง" /></p>
+      </Section>
+
+      <Section title="ui.tsx: Button / Chip / Card / Progress / Skeleton">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {(['primary', 'dark', 'outline', 'ghost', 'danger'] as const).map((v) => <Button key={v} variant={v}>{v}</Button>)}
+            <Button size="sm">sm</Button><Button disabled>disabled</Button>
+          </div>
+          <div className="flex gap-2">{(['brand', 'dark', 'mute', 'done'] as const).map((t) => <Chip key={t} tone={t}>{t}</Chip>)}</div>
+          <Card>Card</Card>
+          <Progress percent={60} /><Skeleton className="h-6 w-40" />
+          <Empty text="Empty (card)" description="ย่อจาก EmptyState" />
+        </div>
+      </Section>
+
+      <Section title="Field / Input / Select / DatePicker">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="ชื่อคอร์ส *" hint="ไม่เกิน 120 ตัวอักษร" help="คำอธิบายยาวๆ" field="name"><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
+          <Field label="มี error" error="ต้องกรอกช่องนี้"><Input /></Field>
+          <Field label="Textarea"><Textarea rows={2} /></Field>
+          <Field label="Select" as="div">
+            <Select variant="field" value={sel} onChange={(e) => setSel(e.target.value)}>
+              <option value="a">ตัวเลือก A</option><option value="b">ตัวเลือก B</option><option value="c" disabled>ตัวเลือก C</option>
+            </Select>
+          </Field>
+          <Field label="DatePicker" as="div"><DatePicker value={date} onChange={setDate} clearable variant="field" /></Field>
+          <Field label="DatePicker + เวลา" as="div"><DatePicker value="" onChange={() => {}} withTime variant="pill" /></Field>
+        </div>
+      </Section>
+
+      <Section title="toast / confirmDialog">
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={() => toast.success('บันทึกแล้ว')}>success</Button>
+          <Button size="sm" variant="outline" onClick={() => toast.error('ผิดพลาด')}>error</Button>
+          <Button size="sm" variant="outline" onClick={() => toast.info('ข้อมูล')}>info</Button>
+          <Button size="sm" variant="danger" onClick={async () => toast.info((await confirmDialog('ลบรายการนี้?', { danger: true })) ? 'ยืนยัน' : 'ยกเลิก')}>confirm</Button>
+        </div>
       </Section>
 
       <Section title="Avatar">
