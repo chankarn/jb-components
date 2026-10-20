@@ -16,7 +16,7 @@ npm run build
 | 1 ชั้นล่างสุด | Tabs, PillSwitch (+ThemeProvider/ThemeToggle), HelpTip, EmptyState/NoDataArt, MediaLightbox/ZoomImage | ย้ายแล้ว |
 | 2 | Avatar, StatusBadge, ProgressRing (+`lib/cover.ts`) | ย้ายแล้ว |
 | 3a ฟอร์ม/ป๊อปอัป | ui.tsx (Card, Button, Chip, Field, Input, Textarea, Progress, Skeleton, Empty), Select, DatePicker (+`lib/calendar.ts` + เทสต์), feedback.tsx (toast/confirmDialog) | ย้ายแล้ว |
-| 3b | admin/kit.tsx (Dialog, Drawer, DataTable, Pagination, ...), Table.tsx, RowMenu | ยังไม่ย้าย |
+| 3b | admin/kit.tsx (DataTable, Toolbar, FilterSelect, Pagination, Drawer, Dialog, SectionCard, StatCard, AdminPageHeader, InfoNote), Table.tsx, admin/RowMenu.tsx | ย้ายแล้ว |
 
 ไม่ย้าย (ผูกกับระบบอบรม): QuestionEditor, Wizard, AdminShell, users/*
 
@@ -24,3 +24,4 @@ npm run build
 - ไม่ย้าย `LangSwitch` (ผูกกับ `POST /api/lang` + cookie ของต้นทาง) ใช้ `PillSwitch` ต่อกับกลไกสลับภาษาของแอปปลายทางเอง
 - `<FeedbackHost />` ต้อง mount ครั้งเดียวที่ root layout (ทำไว้แล้วใน `src/app/layout.tsx`)
 - `Field` ยังมี selector `[data-bank-picker]` ที่เป็นของเฉพาะระบบต้นทาง (ไม่เป็นอันตราย คงไว้ตามโค้ดเดิม)
+- `Drawer` ในต้นทางไม่มี `role`/`aria-modal` (ต่างจาก `Dialog`) ซึ่งขัดกับข้อตกลง "role/aria ครบ" ใน README ต้นทาง ยังไม่ได้แก้ ย้ายตามโค้ดเดิม

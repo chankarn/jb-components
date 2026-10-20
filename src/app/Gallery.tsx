@@ -11,6 +11,9 @@ import { Button, Card, Chip, Field, Input, Textarea, Progress, Skeleton, Empty }
 import { Select } from '@/components/Select';
 import { DatePicker } from '@/components/DatePicker';
 import { toast, confirmDialog } from '@/components/feedback';
+import { DataTable, Toolbar, FilterSelect, Pagination, Dialog, Drawer, SectionCard, StatCard, AdminPageHeader, InfoNote } from '@/components/admin/kit';
+import { RowMenu } from '@/components/admin/RowMenu';
+import { Pencil, Trash2 } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ProgressRing } from '@/components/ProgressRing';
@@ -51,6 +54,14 @@ export function Gallery() {
   const [sel, setSel] = useState('a');
   const [date, setDate] = useState('');
   const [name, setName] = useState('');
+  const [q, setQ] = useState('');
+  const [status, setStatus] = useState('');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [dlg, setDlg] = useState(false);
+  const [drw, setDrw] = useState(false);
+  const rows = Array.from({ length: 25 }, (_, i) => ({ id: i + 1, name: `คอร์ส ${i + 1}`, st: ['published', 'draft', 'archived'][i % 3], n: (i + 1) * 7 }))
+    .filter((r) => r.name.includes(q) && (!status || r.st === status));
   return (
     <div {...(admin ? { 'data-surface': 'admin' } : {})} className="mx-auto max-w-4xl space-y-5 p-6">
       <header className="flex items-center justify-between gap-3">
@@ -131,6 +142,45 @@ export function Gallery() {
           <Button size="sm" variant="outline" onClick={() => toast.info('ข้อมูล')}>info</Button>
           <Button size="sm" variant="danger" onClick={async () => toast.info((await confirmDialog('ลบรายการนี้?', { danger: true })) ? 'ยืนยัน' : 'ยกเลิก')}>confirm</Button>
         </div>
+      </Section>
+
+      <Section title="admin/kit: Table · Toolbar · Pagination · RowMenu">
+        <div className="space-y-3">
+          <Toolbar q={q} onSearch={(v) => { setQ(v); setPage(1); }} placeholder="ค้นหาคอร์ส…">
+            <FilterSelect value={status} onChange={(v) => { setStatus(v); setPage(1); }} options={[{ value: '', label: 'ทุกสถานะ' }, { value: 'published', label: 'เผยแพร่' }, { value: 'draft', label: 'ร่าง' }]} />
+          </Toolbar>
+          <DataTable
+            rows={rows.slice((page - 1) * perPage, page * perPage)}
+            columns={[
+              { key: 'name', header: 'ชื่อ', render: (r) => r.name },
+              { key: 'st', header: 'สถานะ', className: 'w-36', render: (r) => <StatusBadge status={r.st} /> },
+              { key: 'n', header: 'จำนวน', className: 'w-28 text-right', render: (r) => r.n },
+              { key: 'm', header: '', className: 'w-14', render: (r) => (
+                <RowMenu items={[{ label: 'แก้ไข', icon: <Pencil size={14} />, onClick: () => toast.info(`แก้ไข ${r.id}`) }, { label: 'ลบ', icon: <Trash2 size={14} />, danger: true, onClick: () => toast.error(`ลบ ${r.id}`) }]} />
+              ) },
+            ]}
+          />
+          <Pagination page={page} pages={Math.max(1, Math.ceil(rows.length / perPage))} total={rows.length} onChange={setPage} perPage={perPage} onPerPageChange={(n) => { setPerPage(n); setPage(1); }} />
+          <DataTable rows={[]} columns={[{ key: 'a', header: 'ว่าง', render: () => null }]} />
+        </div>
+      </Section>
+
+      <Section title="admin/kit: Dialog · Drawer · SectionCard · StatCard · PageHeader · InfoNote">
+        <div className="space-y-4">
+          <div className="flex gap-2"><Button size="sm" onClick={() => setDlg(true)}>เปิด Dialog</Button><Button size="sm" variant="outline" onClick={() => setDrw(true)}>เปิด Drawer</Button></div>
+          <AdminPageHeader title="หัวหน้าจอ" stats={[{ label: 'ทั้งหมด', value: 8 }, { label: 'เผยแพร่', value: 6, tone: 'done' }, { label: 'ค้าง', value: 2, tone: 'warn' }]} actions={<Button size="sm">เพิ่ม</Button>} />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatCard label="ผู้เรียน" value={120} hint="รวมทั้งหมด" /><StatCard label="ผ่าน" value={80} tone="done" /><StatCard label="ค้าง" value={9} tone="warn" /><StatCard label="เลยกำหนด" value={3} tone="danger" onClick={() => toast.info('กดได้')} />
+          </div>
+          <SectionCard title="หัวข้อการ์ด" hint="คำอธิบายสั้น" help="คำอธิบายยาว"><p className="text-sm">เนื้อหา</p></SectionCard>
+          <InfoNote>ข้อความอธิบายท้ายหน้า</InfoNote>
+        </div>
+        <Dialog open={dlg} title="เพิ่มรายการ" size="lg" onClose={() => setDlg(false)} footer={<Button onClick={() => setDlg(false)}>บันทึก</Button>}>
+          <Field label="ชื่อ"><Input /></Field>
+        </Dialog>
+        <Drawer open={drw} title="รายละเอียด" onClose={() => setDrw(false)} footer={<Button variant="outline" onClick={() => setDrw(false)}>ปิด</Button>}>
+          <p className="text-sm">เนื้อหายาว</p>
+        </Drawer>
       </Section>
 
       <Section title="Avatar">
