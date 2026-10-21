@@ -7,7 +7,7 @@ import { ThemeToggle } from '@/components/ThemeProvider';
 import { HelpTip } from '@/components/HelpTip';
 import { EmptyState } from '@/components/EmptyState';
 import { ZoomImage } from '@/components/MediaLightbox';
-import { Button, Card, Chip, Field, Input, Textarea, Progress, Skeleton, Empty } from '@/components/ui';
+import { Button, Card, Chip, Field, Input, Textarea, Progress, Skeleton, SkeletonText, Empty } from '@/components/ui';
 import { Select } from '@/components/Select';
 import { DatePicker } from '@/components/DatePicker';
 import { toast, confirmDialog } from '@/components/feedback';
@@ -18,6 +18,10 @@ import { LoginBackdrop, LoginPattern, AdminLoginBackdrop, HeroPattern } from '@/
 import { ImagePicker } from '@/components/admin/ImagePicker';
 import { OtpInput } from '@/components/OtpInput';
 import { PasswordInput, PasswordRules } from '@/components/admin/PasswordFields';
+import { CiPanel } from './CiPanel';
+import { ExpandButton } from '@/components/ExpandButton';
+import { Plus, Download, Trash2 as Trash, ExternalLink } from 'lucide-react';
+import { ShareButtons } from '@/components/ShareButtons';
 import { Avatar } from '@/components/Avatar';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ProgressRing } from '@/components/ProgressRing';
@@ -27,6 +31,7 @@ const SCALES: [string, string[]][] = [
   ['ok', ['50', '500', '600', '700']],
   ['warn', ['50', '500', '600', '700']],
   ['danger', ['50', '100', '500', '600', '700']],
+  ['accent', ['DEFAULT', '2']],
 ];
 
 // Tailwind ต้องเห็นชื่อคลาสเต็ม จึงแมปไว้ตรงๆ ไม่ประกอบสตริง
@@ -35,6 +40,7 @@ const BG: Record<string, string> = {
   'brand-400': 'bg-brand-400', 'brand-500': 'bg-brand-500', 'brand-600': 'bg-brand-600', 'brand-700': 'bg-brand-700',
   'ok-50': 'bg-ok-50', 'ok-500': 'bg-ok-500', 'ok-600': 'bg-ok-600', 'ok-700': 'bg-ok-700',
   'warn-50': 'bg-warn-50', 'warn-500': 'bg-warn-500', 'warn-600': 'bg-warn-600', 'warn-700': 'bg-warn-700',
+  'accent-DEFAULT': 'bg-accent', 'accent-2': 'bg-accent-2',
   'danger-50': 'bg-danger-50', 'danger-100': 'bg-danger-100', 'danger-500': 'bg-danger-500', 'danger-600': 'bg-danger-600', 'danger-700': 'bg-danger-700',
 };
 
@@ -55,6 +61,7 @@ export function Gallery() {
   const [tab, setTab] = useState('all');
   const [sw, setSw] = useState<0 | 1>(0);
   const [admin, setAdmin] = useState(false);
+  const [ci, setCi] = useState(false);
   const [sel, setSel] = useState('a');
   const [date, setDate] = useState('');
   const [name, setName] = useState('');
@@ -66,6 +73,8 @@ export function Gallery() {
   const [otp, setOtp] = useState('');
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
+  const [ring, setRing] = useState(60);
+  const [replay, setReplay] = useState(0);
   const [dlg, setDlg] = useState(false);
   const [drw, setDrw] = useState(false);
   const rows = Array.from({ length: 25 }, (_, i) => ({ id: i + 1, name: `คอร์ส ${i + 1}`, st: ['published', 'draft', 'archived'][i % 3], n: (i + 1) * 7 }))
@@ -76,11 +85,15 @@ export function Gallery() {
         <h1 className="text-2xl font-semibold">jb-components</h1>
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-ink-soft">
-            <input type="checkbox" checked={admin} onChange={(e) => setAdmin(e.target.checked)} /> admin surface
+            <input type="checkbox" checked={admin} disabled={ci} onChange={(e) => setAdmin(e.target.checked)} /> admin surface{ci && ' (ปิดอยู่ระหว่างใช้สี CI)'}
           </label>
           <ThemeToggle />
         </div>
       </header>
+
+      <Section title="สี CI">
+        <CiPanel onActiveChange={setCi} />
+      </Section>
 
       <Section title="Tokens">
         <div className="space-y-3">
@@ -123,8 +136,39 @@ export function Gallery() {
           </div>
           <div className="flex gap-2">{(['brand', 'dark', 'mute', 'done'] as const).map((t) => <Chip key={t} tone={t}>{t}</Chip>)}</div>
           <Card>Card</Card>
-          <Progress percent={60} /><Skeleton className="h-6 w-40" /><Skeleton className="h-16 w-full" />
+          <Progress percent={60} />
           <Empty text="Empty (card)" description="ย่อจาก EmptyState" />
+        </div>
+      </Section>
+
+      <Section title="Skeleton (shimmer)">
+        <div className="space-y-5">
+          <div className="flex flex-wrap items-center gap-3">
+            <Skeleton className="h-6 w-40" /><Skeleton className="h-9 w-24 rounded-pill" /><Skeleton className="size-10 rounded-full" /><Skeleton className="h-16 w-28" />
+          </div>
+          <SkeletonText lines={3} className="max-w-md" />
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-12 shrink-0 rounded-full" />
+            <div className="flex-1 space-y-2"><Skeleton className="h-4 w-1/3 rounded-md" /><Skeleton className="h-3 w-2/3 rounded-md" /></div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <Card key={i} className="space-y-3 p-3">
+                <Skeleton className="h-28 w-full rounded-xl" />
+                <Skeleton className="h-4 w-3/4 rounded-md" />
+                <SkeletonText lines={2} />
+                <Skeleton className="h-9 w-24 rounded-pill" />
+              </Card>
+            ))}
+          </div>
+          <div className="divide-y divide-ink/10 rounded-2xl border border-ink/10">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-3 p-3">
+                <Skeleton className="size-9 rounded-full" />
+                <Skeleton className="h-4 flex-1 rounded-md" /><Skeleton className="h-6 w-16 rounded-pill" /><Skeleton className="h-4 w-12 rounded-md" />
+              </div>
+            ))}
+          </div>
         </div>
       </Section>
 
@@ -230,6 +274,20 @@ export function Gallery() {
         </div>
       </Section>
 
+      <Section title="ExpandButton (ปุ่มยืดได้ทั่วไป)">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <ExpandButton icon={<Plus size={22} />} label="เพิ่มรายการ" onClick={() => toast.success('เพิ่มแล้ว')} />
+          <ExpandButton icon={<Download size={22} />} label="ดาวน์โหลด" expandedWidth={170} className="bg-ink text-paper" onClick={() => toast.info('ดาวน์โหลด')} />
+          <ExpandButton icon={<Trash size={22} />} label="ลบ" expandedWidth={110} className="bg-state-overdue" onClick={() => toast.error('ลบแล้ว')} />
+          <ExpandButton icon={<ExternalLink size={22} />} label="เปิดลิงก์" href="https://example.com" className="border border-ink/15 bg-surface text-ink" />
+          <ExpandButton icon={<Plus size={16} />} label="ขนาดเล็ก" size={40} expandedWidth={150} />
+        </div>
+      </Section>
+
+      <Section title="ShareButtons (LINE / Facebook)">
+        <ShareButtons url="https://example.com/fortune" />
+      </Section>
+
       <Section title="Avatar">
         <div className="flex items-center gap-3">
           {['สมชาย', 'Anna', 'Bo', 'ฟ้า', 'Kim', 'Zed', 'Mai'].map((n, i) => <Avatar key={n} name={n} seed={i} />)}
@@ -244,7 +302,26 @@ export function Gallery() {
       </Section>
 
       <Section title="ProgressRing">
-        <div className="flex items-center gap-4"><ProgressRing percent={0} /><ProgressRing percent={42} /><ProgressRing percent={100} size={80} stroke={9} /></div>
+        <div className="space-y-5">
+          <div className="flex flex-wrap items-center gap-6">
+            <ProgressRing key={`a${replay}`} percent={ring} size={96} stroke={9} />
+            <div className="flex flex-wrap items-center gap-2">
+              {[0, 25, 60, 100].map((v) => <Button key={v} size="sm" variant={ring === v ? 'primary' : 'outline'} onClick={() => setRing(v)}>{v}%</Button>)}
+              <Button size="sm" variant="ghost" onClick={() => setRing((v) => Math.min(100, v + 10))}>+10</Button>
+              <Button size="sm" variant="ghost" onClick={() => setRing((v) => Math.max(0, v - 10))}>−10</Button>
+              <Button size="sm" variant="ghost" onClick={() => setReplay((n) => n + 1)}>เล่นซ้ำ</Button>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-5">
+            <ProgressRing key={`b${replay}`} percent={0} size={48} stroke={5} />
+            <ProgressRing key={`c${replay}`} percent={42} />
+            <ProgressRing key={`d${replay}`} percent={78} size={80} stroke={9} />
+            <ProgressRing key={`e${replay}`} percent={100} size={64} />
+            <ProgressRing key={`f${replay}`} percent={100} size={64} completeTone={false} />
+            <ProgressRing percent={64} animated={false} />
+          </div>
+          <p className="text-xs text-ink-mute">แถวล่าง: 0% · 42% · 78% · 100% (เขียว + วงคลื่น) · 100% แบบไม่เปลี่ยนสี · ไม่มีอนิเมชัน</p>
+        </div>
       </Section>
 
       <Section title="EmptyState">

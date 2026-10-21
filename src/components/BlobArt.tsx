@@ -67,8 +67,9 @@ export function FlatCluster({ color, className, front = 'wave', back = 'round', 
 
 export const BLOB_PALETTE = {
   red: 'rgb(var(--brand-500))',
-  amber: '#F5A623',
-  teal: '#00B295',
+  // ต้นทางฝัง hex (#F5A623 / #00B295) — ที่นี่อ้างโทเคนสีรอง/สีที่สามให้เปลี่ยนตามสี CI
+  amber: 'rgb(var(--accent-500))',
+  teal: 'rgb(var(--accent2-500))',
 };
 
 /**

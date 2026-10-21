@@ -694,6 +694,8 @@ export const th = {
   'admin.qe.explain_help': 'แสดงให้ผู้เรียนดูหลังส่งคำตอบ เมื่อคอร์สเปิดตัวเลือก "แสดงเฉลยหลังส่งคำตอบ" ไว้ที่ขั้นที่ 2 ของ wizard',
   'admin.qe.choices_hint': 'ตัวเลือกที่ถูกต้องและตำแหน่งที่ล็อก',
   'common.zoom': 'ดูเต็มภาพ',
+  'share.line': 'แชร์ใน LINE',
+  'share.facebook': 'แชร์ใน Facebook',
   'wiz.of_total': 'จากทั้งหมด {n} ข้อ',
   'wiz.over_bank': 'ตั้งไว้ {n} ข้อ แต่คลังที่เลือกมีแค่ {total} ข้อ',
   'wiz.row_over': 'เกินจำนวนข้อในคลัง ({total} ข้อ)',

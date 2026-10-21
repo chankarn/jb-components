@@ -676,6 +676,8 @@ export const en: Record<DictKey, string> = {
   'admin.qe.explain_help': 'Shown to learners after they submit, when the course has "Show explanation after submit" turned on in step 2 of the wizard.',
   'admin.qe.choices_hint': 'Mark the correct answers and lock positions',
   'common.zoom': 'View full size',
+  'share.line': 'Share on LINE',
+  'share.facebook': 'Share on Facebook',
   'wiz.of_total': 'Out of {n} in total',
   'wiz.over_bank': 'Set to {n}, but the selected banks only have {total}',
   'wiz.row_over': 'Exceeds the bank size ({total})',

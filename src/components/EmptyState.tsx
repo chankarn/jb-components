@@ -5,7 +5,8 @@ import { cn } from '@/lib/utils';
  * - สี brand ตามฝั่ง (แดงฝั่งผู้เรียน · Cerulean หลังบ้าน) และเปลี่ยนตามธีมสว่าง/มืดเอง
  * - โฟลเดอร์/ใบไม้ใช้เหลืองอำพันจากพาเลตเดียวกับ blob ของหน้า login
  */
-const AMBER = '#F5A623';
+// สีรอง (ค่าเริ่มต้นอำพัน #F5A623) — ต้นทางฝัง hex ไว้ ที่นี่อ้างโทเคนให้เปลี่ยนตามสี CI
+const AMBER = 'rgb(var(--accent-500))';
 const folder = `color-mix(in srgb, ${AMBER} 62%, rgb(var(--surface)))`;
 const folderDark = `color-mix(in srgb, ${AMBER} 82%, rgb(var(--surface)))`;
 const folderBack = `color-mix(in srgb, ${AMBER} 92%, rgb(var(--surface)))`;

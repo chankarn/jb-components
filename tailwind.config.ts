@@ -33,6 +33,8 @@ export default {
           soft: channel('ink-soft'),
           mute: channel('ink-mute'),
         },
+        // สีตกแต่ง (สีรอง/สีที่สามของ CI) ใช้กับภาพประกอบและลวดลาย ไม่ใช้กับข้อความ
+        accent: { DEFAULT: channel('accent-500'), 2: channel('accent2-500') },
         paper: channel('paper'),
         surface: channel('surface'),
         state: {

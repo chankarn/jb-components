@@ -61,6 +61,10 @@
   --danger-500: 224 69 69;
   --danger-600: 198 40 40;
   --danger-700: 158 31 31;
+
+  /* สีตกแต่ง (ภาพประกอบ ลวดลาย) — ต้นทางฝัง hex ไว้ในคอมโพเนนต์ ที่นี่ทำเป็นโทเคนให้เปลี่ยนตามสี CI ได้ */
+  --accent-500: 245 166 35;   /* อำพัน #F5A623 */
+  --accent2-500: 0 178 149;   /* มิ้นต์ #00B295 */
 }
 
 /*
@@ -164,3 +168,25 @@ video.no-skip::-webkit-media-controls-seek-forward-button { display: none !impor
 .flow-chain:hover .flow-line { --flow-c: rgb(var(--brand-500)); animation-duration: .8s; }
 .flow-chain:hover .flow-head { border-left-color: rgb(var(--brand-500)); }
 @keyframes flow-march { to { background-position: 24px 0; } }
+
+/* Skeleton: แถบแสงไล่ผ่านกล่องจากซ้ายไปขวา (shimmer) · ผู้ใช้ปิดอนิเมชันในระบบ = เป็นกล่องนิ่ง */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: rgb(var(--ink) / 0.08);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(var(--surface) / 0.75), transparent);
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+:root[data-theme='dark'] .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgb(var(--ink) / 0.09), transparent);
+}
+@keyframes skeleton-shimmer { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; }
+}

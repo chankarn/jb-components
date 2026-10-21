@@ -61,7 +61,9 @@ export function ImagePicker({
   return (
     <label
       className={cn(
-        'flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-dashed border-ink/25 text-[11px] font-semibold text-ink-mute',
+        'flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-dashed border-ink/25 text-[11px] font-semibold text-ink-mute transition',
+        'hover:border-brand-500 hover:bg-brand-50 hover:text-brand-link focus-within:border-brand-500 focus-within:bg-brand-50 focus-within:text-brand-link',
+        busy && 'pointer-events-none opacity-60',
         size === 'sm' ? 'h-10 shrink-0 px-3' : 'h-14 w-full',
       )}
     >
