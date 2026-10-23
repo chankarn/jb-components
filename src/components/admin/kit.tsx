@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n/client';
 import { EmptyState } from '@/components/EmptyState';
@@ -255,124 +254,8 @@ export function Pagination({
   );
 }
 
-/* ── Drawer ── */
-export function Drawer({
-  open,
-  title,
-  onClose,
-  children,
-  footer,
-}: {
-  open: boolean;
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
-}) {
-  const t = useT();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  useEffect(() => {
-    const onEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    if (open) document.addEventListener('keydown', onEsc);
-    return () => document.removeEventListener('keydown', onEsc);
-  }, [open, onClose]);
-
-  // ปิด scroll ของหน้าหลังระหว่างเปิด drawer ไม่งั้นเลื่อนทะลุไปโดนตารางข้างหลัง
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [open]);
-
-  if (!open || !mounted) return null;
-
-  /**
-   * ต้อง portal ไป body — ถ้าปล่อยไว้ใน tree ของหน้า drawer จะโดน layout ของ parent เล่นงาน
-   * เคสที่เจอจริง: หน้าเพจครอบด้วย `space-y-*` ซึ่งยัด margin-top ให้ลูกทุกตัวยกเว้นตัวแรก
-   * drawer (position: fixed) เลยถูกดันลงมาจากขอบบน กลายเป็นแถบขาวโผล่ด้านบน
-   * portal ตัดปัญหาทั้งตระกูลนี้ (margin ของ parent, transform, overflow, stacking context)
-   */
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-ink/40" onClick={onClose} aria-hidden />
-      <aside className="relative flex h-full w-full max-w-lg flex-col bg-surface">
-        <header className="flex items-center gap-3 bg-brand-600 px-5 py-3 text-white">
-          <h2 className="flex-1 text-base font-extrabold">{title}</h2>
-          <button
-            onClick={onClose}
-            aria-label={t('common.close')}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20"
-          >
-            <X size={16} />
-          </button>
-        </header>
-        <div className="flex-1 space-y-4 overflow-y-auto p-5">{children}</div>
-        {footer && <footer className="border-t border-ink/10 bg-paper px-5 py-3">{footer}</footer>}
-      </aside>
-    </div>,
-    document.body,
-  );
-}
-
-/**
- * หน้าต่างกลางจอ (dialog) สำหรับฟอร์มสั้นๆ เช่นสร้างรายการใหม่ · เนื้อหายาว/มีรายการให้เลื่อนดู ใช้ Drawer ด้านข้างแทน
- * portal ไป body เหมือน Drawer · ปิดด้วย Esc หรือคลิกฉากหลัง · โฟกัสย้ายเข้าหน้าต่างตอนเปิด
- */
-export function Dialog({
-  open, title, onClose, children, footer, size = 'md',
-}: {
-  open: boolean; title: string; onClose: () => void; children: React.ReactNode; footer?: React.ReactNode; size?: 'sm' | 'md' | 'lg' | 'xl';
-}) {
-  const t = useT();
-  const [mounted, setMounted] = useState(false);
-  const reduce = useReducedMotion();
-  useEffect(() => setMounted(true), []);
-  useEffect(() => {
-    if (!open) return;
-    const onEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    document.addEventListener('keydown', onEsc);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onEsc);
-      document.body.style.overflow = prev;
-    };
-  }, [open, onClose]);
-  if (!mounted) return null;
-  const width = { sm: 'max-w-md', md: 'max-w-xl', lg: 'max-w-3xl', xl: 'max-w-4xl' }[size];
-  return createPortal(
-    <AnimatePresence>
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <motion.div
-            className="absolute inset-0 bg-ink/45" onClick={onClose} aria-hidden
-            initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
-          />
-          <motion.div
-            role="dialog" aria-modal="true" aria-label={title}
-            className={cn('relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-[24px] bg-surface shadow-lift', width)}
-            initial={reduce ? false : { opacity: 0, y: 16, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }} transition={{ duration: 0.18, ease: 'easeOut' }}
-          >
-            <header className="flex items-center gap-3 bg-brand-600 px-8 py-5 text-white">
-              <h2 className="flex-1 text-xl font-extrabold">{title}</h2>
-              <button onClick={onClose} aria-label={t('common.close')} className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 transition hover:bg-white/30">
-                <X size={18} />
-              </button>
-            </header>
-            <div className="flex-1 space-y-7 overflow-y-auto px-8 py-7">{children}</div>
-            {footer && <footer className="border-t border-ink/8 bg-paper px-8 py-5">{footer}</footer>}
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>,
-    document.body,
-  );
-}
+/* ── Drawer / Dialog: ย้ายไปเป็นหน้าต่างชุดใหม่ใน components/Overlay.tsx (API เดิมใช้ได้ + ตัวเลือกใหม่) ── */
+export { Dialog, Drawer } from '@/components/Overlay';
 
 /** การ์ดหัวข้อของฟอร์ม: หัวเรียบ (ขีดสี brand ซ้ายหัวข้อ + เส้นคั่นบางๆ) แล้วเนื้อหาด้านล่าง */
 export function SectionCard({ title, hint, help, children, className }: { title: string; hint?: string; /** คำอธิบายยาว แสดงเมื่อกดไอคอน ? ข้างหัวข้อ */ help?: string; children: React.ReactNode; className?: string }) {

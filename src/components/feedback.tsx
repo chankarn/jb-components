@@ -1,8 +1,9 @@
 'use client';
 
 import { useT } from '@/lib/i18n/client';
-import { useEffect, useState } from 'react';
-import { CheckCircle2, XCircle, Info, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { AlertTriangle, CheckCircle2, HelpCircle, XCircle, Info, X } from 'lucide-react';
+import { Dialog } from '@/components/Overlay';
 import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
@@ -44,7 +45,7 @@ export const toast = {
 
 // ── Confirm store ────────────────────────────────────────
 type ConfirmReq = {
-  id: number; message: string; confirmLabel: string; cancelLabel: string;
+  id: number; message: string; description?: string; confirmLabel: string; cancelLabel: string;
   danger: boolean; resolve: (v: boolean) => void;
 };
 
@@ -53,11 +54,11 @@ const confirmSubs = new Set<() => void>();
 
 export function confirmDialog(
   message: string,
-  opts?: { confirmLabel?: string; cancelLabel?: string; danger?: boolean },
+  opts?: { confirmLabel?: string; cancelLabel?: string; danger?: boolean; /** บรรทัดอธิบายใต้คำถาม */ description?: string },
 ): Promise<boolean> {
   return new Promise((resolve) => {
     confirmReq = {
-      id: seq++, message, resolve,
+      id: seq++, message, resolve, description: opts?.description,
       confirmLabel: opts?.confirmLabel ?? '',
       cancelLabel: opts?.cancelLabel ?? '',
       danger: opts?.danger ?? false,
@@ -82,6 +83,10 @@ export function FeedbackHost() {
   const tr = useT();
   const [list, setList] = useState<Toast[]>(toasts);
   const [req, setReq] = useState<ConfirmReq | null>(confirmReq);
+  // คงข้อความล่าสุดไว้ระหว่างอนิเมชันตอนปิด (req เป็น null แล้วแต่หน้าต่างยังจางออกอยู่)
+  const last = useRef<ConfirmReq | null>(null);
+  if (req) last.current = req;
+  const shown = req ?? last.current;
 
   useEffect(() => {
     const onToast = () => setList([...toasts]);
@@ -119,29 +124,23 @@ export function FeedbackHost() {
         })}
       </div>
 
-      {/* confirm modal */}
-      {req && (
-        <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-ink/40" onClick={() => settleConfirm(false)} />
-          <div role="alertdialog" aria-modal="true" aria-label={req.message.split('\n')[0]} className="relative w-full max-w-sm rounded-card bg-surface p-5 shadow-lift">
-            <p className="whitespace-pre-line text-sm font-medium leading-relaxed">{req.message}</p>
-            <div className="mt-5 flex gap-2">
-              <Button variant="ghost" className="flex-1" onClick={() => settleConfirm(false)}>
-                {req.cancelLabel || tr('common.cancel')}
-              </Button>
-              <button
-                onClick={() => settleConfirm(true)}
-                className={cn(
-                  'h-12 flex-1 rounded-pill text-sm font-semibold text-white transition',
-                  req.danger ? 'bg-state-overdue' : 'bg-brand-600 hover:bg-brand-700',
-                )}
-              >
-                {req.confirmLabel || tr('common.confirm')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* confirm modal: ใช้หน้าต่างชุดเดียวกับ Dialog (แบบ alert) · ยืนยันอันตราย → โฟกัสเริ่มที่ "ยกเลิก" (กด Enter พลาดไม่ลบ) */}
+      <Dialog
+        open={!!req} onClose={() => settleConfirm(false)} variant="alert"
+        title={shown?.message ?? ''} description={shown?.description}
+        tone={shown?.danger ? 'danger' : 'brand'}
+        icon={shown?.danger ? <AlertTriangle size={26} strokeWidth={2.2} /> : <HelpCircle size={26} strokeWidth={2.2} />}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => settleConfirm(false)} data-autofocus={shown?.danger || undefined}>
+              {shown?.cancelLabel || tr('common.cancel')}
+            </Button>
+            <Button variant={shown?.danger ? 'danger' : 'primary'} onClick={() => settleConfirm(true)} data-autofocus={!shown?.danger || undefined}>
+              {shown?.confirmLabel || tr('common.confirm')}
+            </Button>
+          </>
+        }
+      />
     </>
   );
 }

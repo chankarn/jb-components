@@ -434,3 +434,22 @@ video.no-skip::-webkit-media-controls-seek-forward-button { display: none !impor
 .otp-box[data-filled] { animation: otp-pop .28s cubic-bezier(.34, 1.56, .64, 1); }
 @keyframes otp-pop { 0% { transform: scale(.82); } 100% { transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .otp-box[data-filled] { animation: none; } }
+
+/* ── Dialog / Drawer (components/Overlay.tsx) ──
+   เนื้อหาค่อยๆ ลอยขึ้นทีละบล็อกตามหลังหน้าต่าง · ไอคอนเด้งเข้า · กล่องยืนยันมีวงแหวนกระเพื่อมรอบไอคอน */
+.modal-body > * { animation: modal-rise .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: .12s; }
+.modal-body > *:nth-child(2) { animation-delay: .16s; }
+.modal-body > *:nth-child(3) { animation-delay: .2s; }
+.modal-body > *:nth-child(4) { animation-delay: .24s; }
+.modal-body > *:nth-child(5) { animation-delay: .28s; }
+.modal-body > *:nth-child(n+6) { animation-delay: .32s; }
+@keyframes modal-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.modal-icon { animation: modal-icon .55s cubic-bezier(.34, 1.56, .64, 1) .08s both; }
+@keyframes modal-icon { from { opacity: 0; transform: scale(.4) rotate(-12deg); } to { opacity: 1; transform: none; } }
+.modal-icon-ring { box-shadow: 0 0 0 0 currentColor; animation: modal-ring 1.8s ease-out .4s 2; opacity: .35; }
+@keyframes modal-ring { 0% { box-shadow: 0 0 0 0 currentColor; opacity: .35; } 100% { box-shadow: 0 0 0 14px currentColor; opacity: 0; } }
+.modal-aurora { animation: modal-aurora .9s ease-out both; }
+@keyframes modal-aurora { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .modal-body > *, .modal-icon, .modal-icon-ring, .modal-aurora { animation: none; }
+}

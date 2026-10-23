@@ -227,17 +227,20 @@ export function Gallery() {
   const [formErr, setFormErr] = useState<Record<string, string>>({});
   const [formSt, setFormSt] = useState<LoadingStatus>('idle');
   const [dlg, setDlg] = useState(false);
-  const [drw, setDrw] = useState(false);
+  const [drw, setDrw] = useState<'right' | 'left' | 'bottom' | null>(null);
+  const [dlgLock, setDlgLock] = useState(false);
+  const [role, setRole] = useState<string | null>('editor');
+  const [teams, setTeams] = useState<string[]>(['ฝ่ายผลิต']);
   const rows = Array.from({ length: 25 }, (_, i) => ({ id: i + 1, name: `คอร์ส ${i + 1}`, st: ['published', 'draft', 'archived'][i % 3], n: (i + 1) * 7 }))
     .filter((r) => r.name.includes(q) && (!status || r.st === status));
   return (
     <div {...(admin ? { 'data-surface': 'admin' } : {})} className="mx-auto max-w-4xl space-y-5 p-6">
-      <header className="flex items-center justify-between gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-semibold">jb-components</h1>
           <Link href="/dashboard" className="rounded-pill bg-brand-100 px-3 py-1 text-xs font-bold text-brand-link transition hover:bg-brand-200">Dashboard →</Link>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-ink-soft">
             <input type="checkbox" checked={admin} disabled={ci} onChange={(e) => setAdmin(e.target.checked)} /> admin surface{ci && ' (ปิดอยู่ระหว่างใช้สี CI)'}
           </label>
@@ -473,7 +476,7 @@ export function Gallery() {
           className="mt-4" fullWidth label="สถานะ" value={tone} onChange={setTone}
           options={[{ value: 'all', label: 'ทั้งหมด' }, { value: 'open', label: 'เปิดอยู่' }, { value: 'closed', label: 'ปิดแล้ว' }, { value: 'draft', label: 'ร่าง (ปิด)', disabled: true }]}
         />
-        <p className="mt-3 font-mono text-xs text-ink-mute">{JSON.stringify({ period, view, tone })}</p>
+        <p className="mt-3 break-all font-mono text-xs text-ink-mute">{JSON.stringify({ period, view, tone })}</p>
       </Section>
 
       <Section title="Slider / Range slider">
@@ -502,7 +505,7 @@ export function Gallery() {
           <Field label="กะทัดรัด" as="div"><NumberInput aria-label="กะทัดรัด" variant="compact" value={qty} onChange={setQty} min={1} max={99} /></Field>
           <Field label="มีข้อผิดพลาด" error="ต้องไม่เกินสต็อก (12)" as="div"><NumberInput aria-label="สต็อก" value={20} onChange={() => {}} /></Field>
         </div>
-        <p className="mt-3 font-mono text-xs text-ink-mute">{JSON.stringify({ qty, amount, weight, big })}</p>
+        <p className="mt-3 break-all font-mono text-xs text-ink-mute">{JSON.stringify({ qty, amount, weight, big })}</p>
       </Section>
 
       <Section title="FileDrop (ลากวางหลายไฟล์ + ความคืบหน้า)">
@@ -625,7 +628,7 @@ export function Gallery() {
           <div className="space-y-2">
             <p className="text-xs font-semibold text-ink-soft">ตั้งค่า · เปิดได้หลายข้อ (separated · controlled)</p>
             <Accordion type="multiple" variant="separated" items={SETTINGS_ACC} value={acc} onValueChange={setAcc} />
-            <p className="font-mono text-xs text-ink-mute">{JSON.stringify(acc)}</p>
+            <p className="break-all font-mono text-xs text-ink-mute">{JSON.stringify(acc)}</p>
           </div>
         </div>
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
@@ -838,9 +841,69 @@ export function Gallery() {
         </div>
       </Section>
 
-      <Section title="admin/kit: Dialog · Drawer · SectionCard · StatCard · PageHeader · InfoNote">
+      <Section title="Dialog / Drawer / confirmDialog">
         <div className="space-y-4">
-          <div className="flex gap-2"><Button size="sm" onClick={() => setDlg(true)}>เปิด Dialog</Button><Button size="sm" variant="outline" onClick={() => setDrw(true)}>เปิด Drawer</Button></div>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={() => setDlg(true)}><Plus size={14} /> เพิ่มสมาชิก (Dialog)</Button>
+            <Button size="sm" variant="outline" onClick={() => setDlgLock(true)}>ฟอร์มที่ปิดเองไม่ได้</Button>
+            <Button size="sm" variant="outline" onClick={() => setDrw('right')}>Drawer ขวา</Button>
+            <Button size="sm" variant="outline" onClick={() => setDrw('left')}>Drawer ซ้าย</Button>
+            <Button size="sm" variant="outline" onClick={() => setDrw('bottom')}>Drawer ล่าง</Button>
+            <Button size="sm" variant="danger" onClick={async () => toast.info((await confirmDialog('ลบโปรเจกต์นี้?', { danger: true, description: 'งานและไฟล์ทั้งหมดในโปรเจกต์จะถูกลบถาวร กู้คืนไม่ได้', confirmLabel: 'ลบโปรเจกต์' })) ? 'ลบแล้ว' : 'ยกเลิก')}>ยืนยันการลบ</Button>
+            <Button size="sm" variant="ghost" onClick={async () => toast.info((await confirmDialog('ส่งรายงานให้หัวหน้า?', { description: 'หัวหน้าจะได้รับอีเมลแจ้งเตือนทันที' })) ? 'ส่งแล้ว' : 'ยกเลิก')}>ยืนยันทั่วไป</Button>
+          </div>
+          <p className="text-xs text-ink-mute">จอแคบ: Dialog กลายเป็นแผ่นเลื่อนจากล่าง ปัดลงที่หัวเพื่อปิด · Drawer ปัดกลับทางขอบเพื่อปิด · ใน Drawer ลองกด "ลบ" → confirm ซ้อนอีกชั้น (Esc ปิดทีละชั้น)</p>
+        </div>
+
+        <Dialog
+          open={dlg} onClose={() => setDlg(false)} size="md" icon={<User size={20} />}
+          title="เพิ่มสมาชิกทีม" description="สมาชิกใหม่จะได้รับอีเมลเชิญเข้าร่วมพื้นที่ทำงาน"
+          footer={<><Button variant="ghost" onClick={() => setDlg(false)}>ยกเลิก</Button><Button onClick={() => { setDlg(false); toast.success('ส่งคำเชิญแล้ว'); }}>ส่งคำเชิญ</Button></>}
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="ชื่อ"><Input placeholder="สมชาย ใจดี" /></Field>
+            <Field label="อีเมล"><Input type="email" placeholder="somchai@company.com" /></Field>
+          </div>
+          <Field label="บทบาท" as="div">
+            <RadioGroup
+              label="บทบาท" variant="card" orientation="horizontal" value={role} onChange={setRole}
+              options={[{ value: 'viewer', label: 'ผู้ชม', description: 'ดูได้อย่างเดียว' }, { value: 'editor', label: 'ผู้แก้ไข', description: 'แก้ไขเนื้อหาได้' }, { value: 'admin', label: 'ผู้ดูแล', description: 'จัดการทุกอย่าง' }]}
+            />
+          </Field>
+          <Field label="ทีม" as="div"><TagInput aria-label="ทีม" variant="colorful" value={teams} onChange={setTeams} placeholder="พิมพ์ชื่อทีม" /></Field>
+        </Dialog>
+
+        <Dialog
+          open={dlgLock} onClose={() => setDlgLock(false)} dismissible={false} size="sm" tone="success" icon={<ShieldCheck size={20} />}
+          title="ตั้งรหัสผ่านใหม่" description="ต้องตั้งให้เสร็จก่อน ลองกด Esc หรือคลิกฉากหลัง → หน้าต่างเด้งเตือนแทนการปิด"
+          footer={<Button onClick={() => setDlgLock(false)}>บันทึก</Button>}
+        >
+          <Field label="รหัสผ่านใหม่" as="div"><PasswordInput value={pw} onChange={setPw} autoComplete="new-password" /></Field>
+        </Dialog>
+
+        <Drawer
+          open={drw !== null} side={drw ?? 'right'} onClose={() => setDrw(null)}
+          title="คำสั่งซื้อ #A-20931" description="สร้างเมื่อ 22 ต.ค. 2569 · 14:05"
+          footer={<><Button variant="ghost" onClick={async () => { if (await confirmDialog('ลบคำสั่งซื้อนี้?', { danger: true, description: 'ลูกค้าจะได้รับแจ้งทางอีเมล', confirmLabel: 'ลบคำสั่งซื้อ' })) { setDrw(null); toast.success('ลบคำสั่งซื้อแล้ว'); } }}>ลบ</Button><Button onClick={() => setDrw(null)}>พิมพ์ใบเสร็จ</Button></>}
+        >
+          <div className="flex items-center gap-3 rounded-2xl bg-paper p-3">
+            <Avatar name="นภา" seed={7} size={44} />
+            <div className="min-w-0 flex-1"><p className="font-semibold">นภา ศรีสุข</p><p className="truncate text-xs text-ink-mute">napa@example.com · 081-234-5678</p></div>
+            <StatusBadge status="passed" />
+          </div>
+          <div className="divide-y divide-ink/[0.06] rounded-2xl border border-ink/10">
+            {[['นมเปรี้ยวรสสตรอว์เบอร์รี × 6', '฿150'], ['โยเกิร์ตกรีก × 2', '฿118'], ['ค่าจัดส่ง', '฿40']].map(([k, v]) => (
+              <div key={k} className="flex justify-between px-4 py-3 text-sm"><span className="text-ink-soft">{k}</span><span className="font-medium tabular-nums">{v}</span></div>
+            ))}
+            <div className="flex justify-between px-4 py-3 text-sm font-semibold"><span>รวม</span><span className="tabular-nums">฿308</span></div>
+          </div>
+          <Stepper orientation="vertical" current={2} steps={[{ title: 'สั่งซื้อ', description: '14:05' }, { title: 'ชำระเงิน', description: '14:07' }, { title: 'กำลังจัดส่ง', description: 'คาดว่าถึงพรุ่งนี้' }, { title: 'ได้รับสินค้า' }]} />
+          <Field label="หมายเหตุถึงผู้ส่ง"><Textarea rows={3} placeholder="เช่น ฝากไว้ที่ป้อมยาม" /></Field>
+        </Drawer>
+      </Section>
+
+      <Section title="admin/kit: SectionCard · StatCard · PageHeader · InfoNote">
+        <div className="space-y-4">
           <AdminPageHeader title="หัวหน้าจอ" stats={[{ label: 'ทั้งหมด', value: 8 }, { label: 'เผยแพร่', value: 6, tone: 'done' }, { label: 'ค้าง', value: 2, tone: 'warn' }]} actions={<Button size="sm">เพิ่ม</Button>} />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatCard label="ผู้เรียน" value={120} hint="รวมทั้งหมด" /><StatCard label="ผ่าน" value={80} tone="done" /><StatCard label="ค้าง" value={9} tone="warn" /><StatCard label="เลยกำหนด" value={3} tone="danger" onClick={() => toast.info('กดได้')} />
@@ -848,12 +911,6 @@ export function Gallery() {
           <SectionCard title="หัวข้อการ์ด" hint="คำอธิบายสั้น" help="คำอธิบายยาว"><p className="text-sm">เนื้อหา</p></SectionCard>
           <InfoNote>ข้อความอธิบายท้ายหน้า</InfoNote>
         </div>
-        <Dialog open={dlg} title="เพิ่มรายการ" size="lg" onClose={() => setDlg(false)} footer={<Button onClick={() => setDlg(false)}>บันทึก</Button>}>
-          <Field label="ชื่อ"><Input /></Field>
-        </Dialog>
-        <Drawer open={drw} title="รายละเอียด" onClose={() => setDrw(false)} footer={<Button variant="outline" onClick={() => setDrw(false)}>ปิด</Button>}>
-          <p className="text-sm">เนื้อหายาว</p>
-        </Drawer>
       </Section>
 
       <Section title="ImagePicker (ส่ง upload / resolveUrl เอง)">
@@ -914,7 +971,7 @@ export function Gallery() {
       </Section>
 
       <Section title="Avatar">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {['สมชาย', 'Anna', 'Bo', 'ฟ้า', 'Kim', 'Zed', 'Mai'].map((n, i) => <Avatar key={n} name={n} seed={i} />)}
           <Avatar name="Muted" seed={1} muted />
         </div>
