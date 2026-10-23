@@ -55,6 +55,9 @@ export default {
       boxShadow: {
         card: '0 1px 2px rgba(37,31,71,.06), 0 8px 24px -16px rgba(37,31,71,.24)',
         lift: '0 2px 6px rgba(37,31,71,.08), 0 16px 32px -20px rgba(37,31,71,.35)',
+        // วงเรืองนุ่มรอบช่องที่โฟกัส (ทุกช่องกรอกใช้ชุดเดียวกัน) · ตอนผิดเป็นสีแดง
+        glow: '0 0 0 4px rgb(var(--brand-500) / 0.12)',
+        'glow-danger': '0 0 0 4px rgb(var(--danger-500) / 0.14)',
       },
       keyframes: {
         pop: { '0%': { transform: 'scale(.96)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },

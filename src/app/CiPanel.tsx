@@ -1,62 +1,33 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import { ArrowDown, ArrowLeftRight, ArrowUp, Plus, RotateCcw, X } from 'lucide-react';
 import { Button, Chip, Field, Input } from '@/components/ui';
 import { PillSwitch } from '@/components/PillSwitch';
-import { ciTheme, ciThemeCss, parseHex, toHex, DEFAULT_DECOR, DEFAULT_SECONDARY } from '@/lib/ci-theme';
+import { ciTheme, parseHex, toHex } from '@/lib/ci-theme';
+import { chartPalette, checkPalette, similarCiPairs } from '@/lib/chart-palette';
+import { resetCi, setCiState, useCiState } from '@/lib/ci-store';
 import { cn } from '@/lib/utils';
 
 /**
- * แผงใส่สี CI ของ Gallery: ใส่อย่างน้อย 1 สี (ได้หลายสี) แล้วทั้งหน้าเปลี่ยนตามทันที
+ * แผงใส่สี CI: ใส่อย่างน้อย 1 สี (ได้หลายสี) แล้วทั้งแอปเปลี่ยนตามทันที (ทุกหน้า รวมถึง /dashboard)
  * ลำดับของสี = บทบาท (หลัก → รอง → ตกแต่ง) · สลับ/เลื่อนลำดับเพื่อเปลี่ยนว่าสีไหนใช้ตรงไหน
- * จำค่าไว้ในเบราว์เซอร์นี้ (localStorage) — ใช้ไม่ได้ก็ทำงานต่อโดยไม่จำ
+ * ค่าอยู่ใน store กลาง (`lib/ci-store`) จำไว้ในเบราว์เซอร์นี้ — แผงนี้วางกี่หน้าก็ได้ แก้ที่ไหนก็ได้ผลเหมือนกัน
  */
 const ROLES = [
   { name: 'สีหลัก', where: 'ปุ่ม แท็บ เส้นใต้ ลิงก์ วงแหวนความคืบหน้า' },
   { name: 'สีรอง', where: 'ภาพประกอบ (โฟลเดอร์ใน EmptyState) ลวดลาย' },
   { name: 'ตกแต่ง', where: 'ลวดลายเสริม จุด/เส้นประใน Backdrop' },
 ];
-const DEFAULT_COLORS = ['#FF0000', DEFAULT_SECONDARY, DEFAULT_DECOR];
 const SUGGEST = ['#006989', '#7B4BC4', '#D63C76', '#0E8C8C', '#E8302F', '#3FA3C2', '#F5A623', '#00B295'];
-const STORAGE_KEY = 'jb-ci-colors';
-const STYLE_ID = 'ci-theme';
-
-type Saved = { colors: string[]; harmonize: boolean; active: boolean };
-
-function load(): Saved | null {
-  try {
-    const v = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
-    return v && Array.isArray(v.colors) && v.colors.length ? v : null;
-  } catch {
-    return null;
-  }
-}
-
-function save(v: Saved) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
-  } catch {
-    /* ใช้ได้โดยไม่จำค่า */
-  }
-}
 
 const valid = (s: string) => parseHex(s) !== null;
 const norm = (s: string) => toHex(parseHex(s)!);
 const rgbOf = (channels: string) => `rgb(${channels.split(' ').join(',')})`;
 
-export function CiPanel({ onActiveChange }: { onActiveChange?: (active: boolean) => void }) {
-  const [colors, setColors] = useState<string[]>(DEFAULT_COLORS);
-  const [tune, setTune] = useState(true);
-  // false = ใช้สีตั้งต้นของระบบ (globals.css) · true = ใช้สีที่สร้างจาก CI
-  const [active, setActive] = useState(false);
-
-  const loaded = useRef(false);
-  useEffect(() => {
-    const v = load();
-    if (v) { setColors(v.colors); setTune(v.harmonize); setActive(v.active); }
-    loaded.current = true;
-  }, []);
+/** แผงแก้สี CI — แก้ค่าใน store กลาง (`lib/ci-store`) ส่วนการทาสีทั้งแอปทำโดย <CiThemeApplier/> ที่ root layout */
+export function CiPanel() {
+  const { colors, harmonize: tune, active } = useCiState();
 
   // ใช้แค่ 3 สีแรก (หลัก/รอง/ตกแต่ง) · สีที่ 4 ขึ้นไปเป็นสำรอง
   const roleKey = colors.slice(0, 3).join('|');
@@ -65,20 +36,19 @@ export function CiPanel({ onActiveChange }: { onActiveChange?: (active: boolean)
     return primary ? ciTheme({ primary, secondary, decor, harmonize: tune }) : null;
   }, [roleKey, tune]);
 
-  // เขียน <style> ทับตัวแปรสี · สีหลักผิดรูปแบบชั่วคราว (กำลังพิมพ์) คงธีมล่าสุดไว้
-  useEffect(() => {
-    if (!active) { document.getElementById(STYLE_ID)?.remove(); return; }
-    if (!theme) return;
-    let el = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
-    if (!el) { el = document.createElement('style'); el.id = STYLE_ID; document.head.appendChild(el); }
-    el.textContent = ciThemeCss(theme);
-  }, [active, theme]);
-  useEffect(() => () => document.getElementById(STYLE_ID)?.remove(), []);
+  // สีกราฟ (--chart-N): ช่อง 1–3 ตามสีหลัก/รอง/ตกแต่งที่ระบบสร้าง (หลังปรับโทน) แล้วบีบเข้าเกณฑ์ตาบอดสีของกราฟ
+  const chartCi = useMemo(() => {
+    const primary = roleKey.split('|')[0];
+    return theme && valid(primary) ? { primary: norm(primary), secondary: theme.info.secondary, decor: theme.info.decor } : null;
+  }, [roleKey, theme]);
+  const chartChecks = useMemo(
+    () => (chartCi ? (['light', 'dark'] as const).map((m) => ({ mode: m, hexes: chartPalette(chartCi, m), check: checkPalette(chartPalette(chartCi, m), m) })) : null),
+    [chartCi],
+  );
 
-  useEffect(() => { onActiveChange?.(active); }, [active, onActiveChange]);
-  useEffect(() => { if (loaded.current) save({ colors, harmonize: tune, active }); }, [colors, tune, active]);
+  const similar = useMemo(() => (chartChecks ? similarCiPairs(chartChecks[0].hexes.slice(0, 3)) : []), [chartChecks]);
 
-  const update = (next: string[]) => { setColors(next); setActive(true); };
+  const update = (next: string[]) => setCiState({ colors: next, active: true });
   const setAt = (i: number, v: string) => update(colors.map((c, j) => (j === i ? v : c)));
   const move = (i: number, d: -1 | 1) => {
     const next = [...colors];
@@ -87,7 +57,7 @@ export function CiPanel({ onActiveChange }: { onActiveChange?: (active: boolean)
   };
   const add = () => update([...colors, SUGGEST.find((s) => !colors.map((c) => c.toUpperCase()).includes(s)) ?? '#7B4BC4']);
   const remove = (i: number) => update(colors.filter((_, j) => j !== i));
-  const reset = () => { setColors(DEFAULT_COLORS); setTune(true); setActive(false); };
+  const reset = () => resetCi();
 
   return (
     <div className="space-y-4">
@@ -96,7 +66,7 @@ export function CiPanel({ onActiveChange }: { onActiveChange?: (active: boolean)
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <span className="flex items-center gap-2 text-xs font-semibold text-ink-soft">
             ปรับโทนให้เข้ากัน
-            <PillSwitch label="ปรับโทนให้เข้ากัน" index={tune ? 1 : 0} onChange={(i) => { setTune(i === 1); setActive(true); }} options={['ปิด', 'เปิด']} />
+            <PillSwitch label="ปรับโทนให้เข้ากัน" index={tune ? 1 : 0} onChange={(i) => setCiState({ harmonize: i === 1, active: true })} options={['ปิด', 'เปิด']} />
           </span>
           {colors.length >= 2 && (
             <Button size="sm" variant="outline" onClick={() => move(0, 1)}><ArrowLeftRight size={14} /> สลับสีหลัก↔สีรอง</Button>
@@ -157,6 +127,28 @@ export function CiPanel({ onActiveChange }: { onActiveChange?: (active: boolean)
             <Swatch label="สีรองที่ใช้จริง" hex={theme.info.secondary} given={colors[1]} tuned={tune} />
             <Swatch label="สีตกแต่งที่ใช้จริง" hex={theme.info.decor} given={colors[2]} tuned={tune} />
           </div>
+
+          {chartChecks && (
+            <div className="space-y-2 border-t border-ink/10 pt-3">
+              <p className="text-xs font-semibold text-ink-soft">สีกราฟ 8 ช่อง (ช่อง 1–3 = สีหลัก/รอง/ตกแต่ง ช่อง 4–8 สร้างจากชุดสีนี้เอง ความสดระดับเดียวกัน)</p>
+              {chartChecks.map(({ mode, hexes, check }) => (
+                <div key={mode} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="w-12 text-[11px] text-ink-mute">{mode === 'light' ? 'โหมดสว่าง' : 'โหมดมืด'}</span>
+                  <span className="flex gap-1">{hexes.map((h, i) => <span key={i} title={h} className="size-5 rounded-md border border-ink/10" style={{ background: h }} />)}</span>
+                  <span className={cn('text-[11px] font-semibold', check.ok ? 'text-ok-700' : 'text-danger-700')}>
+                    {check.ok ? '✓ ผ่านเกณฑ์ตาบอดสี' : '✗ ไม่ผ่านเกณฑ์'} · ΔE {check.cvd.toFixed(1)}/{check.normal.toFixed(1)}
+                  </span>
+                  {check.lowContrast.length > 0 && <span className="text-[11px] text-ink-mute">{check.lowContrast.length} สีคอนทราสต์ต่ำ — กราฟมี label/ตารางข้อมูลช่วยอ่านเสมอ</span>}
+                </div>
+              ))}
+              {similar.length > 0 && (
+                <p role="alert" className="rounded-lg bg-warn-50 px-3 py-2 text-[11px] font-semibold text-warn-700">
+                  ⚠ {similar.map(([i, j]) => `${ROLES[i].name}กับ${ROLES[j].name}`).join(' · ')} ในกราฟแทบแยกกันไม่ออก (ΔE {Math.min(...similar.map((x) => x[2])).toFixed(0)} · ควร ≥ 15) —
+                  ลองเปลี่ยนสีใดสีหนึ่งให้ต่างเฉดหรือต่างความสว่างมากขึ้น (เช่น สีอ่อนมากอย่าง Almond จะถูกดันให้เข้มจนกลายเป็นเฉดเดียวกับสีหลัก)
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

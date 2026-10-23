@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import { HelpTip } from '@/components/HelpTip';
 import { EmptyState } from '@/components/EmptyState';
+import { FieldMessage } from '@/components/FieldMessage';
 
 /* ── Card ── */
 export function Card({ className, ...props }: React.ComponentProps<'div'>) {
@@ -84,17 +85,17 @@ export function Field({
   return (
     <Tag
       data-field={field} data-invalid={error ? 'true' : undefined}
-      className="block min-w-0 scroll-mt-24 space-y-1.5 [&[data-invalid=true]_input]:border-danger-500 [&[data-invalid=true]_textarea]:border-danger-500 [&[data-invalid=true]_[aria-haspopup=listbox]]:border-danger-500 [&[data-invalid=true]_[data-bank-picker]]:border-danger-500"
+      className="block min-w-0 scroll-mt-24 space-y-1.5 [&[data-invalid=true]_input]:border-danger-500 [&[data-invalid=true]_textarea]:border-danger-500 [&[data-invalid=true]_[aria-haspopup=listbox]]:border-danger-500 [&[data-invalid=true]_[data-bank-picker]]:border-danger-500 [&[data-invalid=true]_[data-combobox]]:border-danger-500 [&[data-invalid=true]_[data-number-input]]:border-danger-500 [&[data-invalid=true]_[data-dropzone]]:border-danger-500 [&[data-invalid=true]_[data-tag-input]]:border-danger-500 [&[data-invalid=true]_input:focus]:shadow-glow-danger [&[data-invalid=true]_textarea:focus]:shadow-glow-danger [&[data-invalid=true]_[data-number-input]:focus-within]:shadow-glow-danger [&[data-invalid=true]_[data-combobox]:focus-within]:shadow-glow-danger [&[data-invalid=true]_[data-tag-input]:focus-within]:shadow-glow-danger"
     >
       <span className="flex items-center gap-1 text-xs font-semibold text-ink-soft">{label}{help && <HelpTip text={help} />}</span>
       {children}
-      {error ? <span role="alert" className="block text-[11px] font-semibold text-danger-700">{error}</span> : hint && <span className="block text-[11px] text-ink-mute">{hint}</span>}
+      <FieldMessage error={error} hint={hint} />
     </Tag>
   );
 }
 
 const inputBase =
-  'w-full min-w-0 rounded-2xl border border-ink/15 bg-surface px-4 text-sm outline-none transition placeholder:text-ink-mute/60 focus:border-brand-500';
+  'w-full min-w-0 rounded-2xl border border-ink/15 bg-surface px-4 text-sm outline-none transition placeholder:text-ink-mute/60 focus:border-brand-500 focus:shadow-glow';
 
 export function Input(props: React.ComponentProps<'input'>) {
   return <input {...props} className={cn(inputBase, 'h-12', props.className)} />;

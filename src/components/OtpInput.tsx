@@ -2,10 +2,12 @@
 
 import { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { shake } from '@/lib/motion-fx';
 
 /**
  * OTP 6 ช่อง (FR-L-02): เลื่อนช่องอัตโนมัติ · วางรหัส 6 หลักทีเดียว · Backspace ย้อนช่อง · กรอกครบแล้วเรียก onComplete เอง
  * `value` เป็นสตริงตัวเลขยาวไม่เกิน length — คอมโพเนนต์นี้ไม่เก็บ state เอง
+ * เอฟเฟกต์: ตัวเลขเด้งเข้าช่องตอนพิมพ์ · `invalid` กลายเป็น true (รหัสผิด) → ทั้งแถวสั่นหนึ่งครั้ง
  */
 export function OtpInput({
   value, onChange, onComplete, length = 6, disabled, invalid, autoFocus = true,
@@ -19,6 +21,8 @@ export function OtpInput({
   autoFocus?: boolean;
 }) {
   const refs = useRef<(HTMLInputElement | null)[]>([]);
+  const group = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (invalid) shake(group.current); }, [invalid]);
 
   useEffect(() => {
     if (autoFocus) refs.current[Math.min(value.length, length - 1)]?.focus();
@@ -33,7 +37,7 @@ export function OtpInput({
   };
 
   return (
-    <div className="flex justify-center gap-2" role="group" aria-label="OTP">
+    <div ref={group} className="flex justify-center gap-2" role="group" aria-label="OTP">
       {Array.from({ length }, (_, i) => (
         <input
           key={i}
@@ -62,9 +66,11 @@ export function OtpInput({
             if (e.key === 'ArrowRight' && i < length - 1) refs.current[i + 1]?.focus();
           }}
           onFocus={(e) => e.target.select()}
+          data-filled={value[i] ? '' : undefined}
           className={cn(
-            'h-12 w-10 rounded-xl border bg-surface text-center text-xl font-bold outline-none transition sm:w-11',
-            invalid ? 'border-danger-500' : 'border-ink/15 focus:border-brand-500',
+            'otp-box h-12 w-10 rounded-xl border bg-surface text-center text-xl font-bold outline-none transition sm:w-11',
+            invalid ? 'border-danger-500 focus:shadow-glow-danger' : 'border-ink/15 focus:border-brand-500 focus:shadow-glow',
+            value[i] && !invalid && 'border-brand-500/50',
           )}
         />
       ))}

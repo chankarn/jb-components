@@ -132,7 +132,7 @@ export function Toolbar({
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={placeholder ?? t('admin.table.search')}
-          className="h-10 w-full rounded-pill border border-ink/15 bg-surface pl-9 pr-3 text-sm outline-none focus:border-brand-500"
+          className="h-10 w-full rounded-pill border border-ink/15 bg-surface pl-9 pr-3 text-sm outline-none transition focus:border-brand-500 focus:shadow-glow"
         />
       </div>
       {children}

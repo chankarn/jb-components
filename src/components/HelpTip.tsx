@@ -58,7 +58,7 @@ export function HelpTip({ text, className }: { text: string; className?: string 
         <HelpCircle size={16} />
       </span>
       {open && pos && createPortal(
-        <div
+        <div data-floating
           ref={box} id={id} role="note"
           style={{ top: pos.top, left: pos.left, width: Math.min(320, window.innerWidth - 24), transform: pos.up ? 'translateY(-100%)' : undefined }}
           className="fixed z-[70] rounded-xl border border-ink/10 bg-surface px-3.5 py-3 text-xs font-normal leading-relaxed text-ink-soft shadow-lift"

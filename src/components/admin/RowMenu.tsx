@@ -63,7 +63,7 @@ export function RowMenu({ items, label }: { items: RowMenuItem[]; label?: string
         <MoreHorizontal size={18} />
       </button>
       {open && pos && createPortal(
-        <ul
+        <ul data-floating
           ref={menu} role="menu"
           style={{ top: pos.top, right: pos.right, transform: pos.up ? 'translateY(-100%)' : undefined }}
           className="fixed z-50 min-w-[11rem] overflow-hidden rounded-xl border border-ink/10 bg-surface py-1 shadow-lift"

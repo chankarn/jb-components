@@ -167,8 +167,8 @@ export function Select({ value, onChange, disabled, children, className, variant
         onKeyDown={onKey}
         className={cn(
           'group flex w-full min-w-0 items-center justify-between gap-2 border border-ink/15 bg-surface text-left outline-none transition',
-          'hover:border-ink/30 focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-500/20',
-          open && 'border-brand-500 ring-2 ring-brand-500/20',
+          'hover:border-ink/30 focus-visible:border-brand-500 focus-visible:shadow-glow',
+          open && 'border-brand-500 shadow-glow',
           'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-ink/15',
           TRIGGER[variant],
           className,
@@ -182,7 +182,7 @@ export function Select({ value, onChange, disabled, children, className, variant
         createPortal(
           <AnimatePresence>
             {open && pos && (
-              <motion.ul
+              <motion.ul data-floating
                 ref={list}
                 id={uid}
                 role="listbox"

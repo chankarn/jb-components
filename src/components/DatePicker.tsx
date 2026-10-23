@@ -170,8 +170,8 @@ export function DatePicker({ value, onChange, min, max, withTime, clearable, dis
           onClick={() => (open ? close(false) : show())}
           className={cn(
             'flex w-full min-w-0 items-center justify-between gap-2 border border-ink/15 bg-surface text-left outline-none transition',
-            'hover:border-ink/30 focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-500/20',
-            open && 'border-brand-500 ring-2 ring-brand-500/20',
+            'hover:border-ink/30 focus-visible:border-brand-500 focus-visible:shadow-glow',
+            open && 'border-brand-500 shadow-glow',
             'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-ink/15',
             TRIGGER[variant],
           )}
@@ -190,7 +190,7 @@ export function DatePicker({ value, onChange, min, max, withTime, clearable, dis
         createPortal(
           <AnimatePresence>
             {open && pos && (
-              <motion.div
+              <motion.div data-floating
                 ref={panel} id={uid} role="dialog" aria-label={t('cal.pick_date')} onKeyDown={onPanelKey}
                 initial={reduce ? false : { opacity: 0, y: pos.bottom !== undefined ? 6 : -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, transition: { duration: 0.12 } }} transition={{ duration: 0.16, ease: 'easeOut' }}
                 style={{ position: 'fixed', left: pos.left, top: pos.top, bottom: pos.bottom }}
