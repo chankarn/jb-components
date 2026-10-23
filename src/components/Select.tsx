@@ -5,6 +5,7 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Check, ChevronDown } from 'lucide-react';
+import { mergeRefs, useFloating } from '@/components/Popover';
 import { cn } from '@/lib/utils';
 
 type Opt = { value: string; label: string; disabled?: boolean };
@@ -56,28 +57,15 @@ export function Select({ value, onChange, disabled, children, className, variant
   const current = options.find((o) => o.value === String(value ?? ''));
   const [open, setOpen] = React.useState(false);
   const [active, setActive] = React.useState(-1);
-  const [pos, setPos] = React.useState<{ left: number; width: number; top?: number; bottom?: number; max: number } | null>(null);
   const btn = React.useRef<HTMLButtonElement>(null);
   const list = React.useRef<HTMLUListElement>(null);
   const uid = React.useId();
 
-  const place = React.useCallback(() => {
-    const r = btn.current?.getBoundingClientRect();
-    if (!r) return;
-    const below = window.innerHeight - r.bottom - 12;
-    const above = r.top - 12;
-    const flip = below < 200 && above > below;
-    setPos({
-      left: r.left,
-      width: Math.max(r.width, 160),
-      max: Math.min(288, flip ? above : below),
-      ...(flip ? { bottom: window.innerHeight - r.top + 6 } : { top: r.bottom + 6 }),
-    });
-  }, []);
+  // ตำแหน่งรายการ: ตัววางตำแหน่งกลาง (พลิกเมื่อด้านล่างเหลือไม่ถึง 200px · ตามปุ่มตอนเลื่อนหน้า/ย่อจอ แทนการปิดทิ้ง)
+  const { setFloating, pos, anchorWidth } = useFloating(open, btn, { side: 'bottom', align: 'start', offset: 6, minSize: 200 });
 
   const show = () => {
     if (disabled) return;
-    place();
     setActive(Math.max(0, options.findIndex((o) => o.value === String(value ?? ''))));
     setOpen(true);
   };
@@ -99,18 +87,8 @@ export function Select({ value, onChange, disabled, children, className, variant
       const t = e.target as Node;
       if (!btn.current?.contains(t) && !list.current?.contains(t)) setOpen(false);
     };
-    const move = (e: Event) => {
-      if (list.current?.contains(e.target as Node)) return;
-      setOpen(false);
-    };
     document.addEventListener('mousedown', down);
-    window.addEventListener('scroll', move, true);
-    window.addEventListener('resize', move);
-    return () => {
-      document.removeEventListener('mousedown', down);
-      window.removeEventListener('scroll', move, true);
-      window.removeEventListener('resize', move);
-    };
+    return () => document.removeEventListener('mousedown', down);
   }, [open]);
 
   React.useEffect(() => {
@@ -181,16 +159,16 @@ export function Select({ value, onChange, disabled, children, className, variant
       {typeof document !== 'undefined' &&
         createPortal(
           <AnimatePresence>
-            {open && pos && (
+            {open && (
               <motion.ul data-floating
-                ref={list}
+                ref={mergeRefs(list, setFloating)}
                 id={uid}
                 role="listbox"
-                initial={reduce ? false : { opacity: 0, y: pos.bottom !== undefined ? 6 : -6, scale: 0.98 }}
+                initial={reduce ? false : { opacity: 0, y: pos?.side === 'top' ? 6 : -6, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, transition: { duration: 0.12 } }}
                 transition={{ duration: 0.16, ease: 'easeOut' }}
-                style={{ position: 'fixed', left: pos.left, width: pos.width, top: pos.top, bottom: pos.bottom, maxHeight: pos.max }}
+                style={{ position: 'fixed', left: pos?.left ?? 0, top: pos?.top ?? 0, width: Math.max(anchorWidth, 160), maxHeight: Math.min(288, pos?.available ?? 288), visibility: pos ? undefined : 'hidden' }}
                 className="z-[300] overflow-auto rounded-2xl border border-ink/10 bg-surface p-1.5 shadow-lift"
               >
                 {options.map((o, i) => {

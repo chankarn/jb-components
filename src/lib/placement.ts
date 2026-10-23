@@ -18,6 +18,11 @@ export type PlaceInput = {
   padding?: number;
   /** ระยะกันลูกศรชิดมุมกล่อง */
   arrowPadding?: number;
+  /**
+   * ความสูง/กว้างขั้นต่ำที่ "พอใช้" ในการตัดสินใจพลิก (สำหรับรายการที่หดได้ด้วย maxHeight)
+   * เช่น 220 = ถ้าด้านล่างเหลือ ≥ 220 ก็ไม่พลิก แม้รายการเต็มจะสูงกว่านั้น (ให้หดแล้วเลื่อนในตัวเอง)
+   */
+  minSize?: number;
 };
 
 export type Placement = {
@@ -27,6 +32,8 @@ export type Placement = {
   side: Side;
   /** ตำแหน่งลูกศรตามแกนขวาง นับจากขอบซ้าย/บนของกล่องลอย (ชี้กลางตัวยึดเสมอ แม้กล่องถูกเลื่อนหนีขอบจอ) */
   arrow: number;
+  /** ที่ว่างตามแกนหลักฝั่งที่วางจริง (หักระยะห่าง/กันขอบแล้ว) — ใช้ตั้ง maxHeight ให้รายการหดพอดีจอ */
+  available: number;
 };
 
 const OPPOSITE: Record<Side, Side> = { top: 'bottom', bottom: 'top', left: 'right', right: 'left' };
@@ -40,21 +47,26 @@ export function spaceAround(a: Box, vp: { width: number; height: number }): Reco
  * - ฝั่งที่ขอวางไม่พอ และฝั่งตรงข้ามมีที่มากกว่า → พลิก (ไม่พลิกถ้าฝั่งตรงข้ามก็ไม่พอและแคบกว่า)
  * - แกนขวาง: จัดชิด start/center/end ตามที่ขอ แล้วเลื่อนให้อยู่ในจอ (เว้น padding) · กล่องใหญ่กว่าจอ → ชิดขอบเริ่ม
  */
-export function place({ anchor: a, floating: f, viewport: vp, side = 'bottom', align = 'center', offset = 8, padding = 8, arrowPadding = 12 }: PlaceInput): Placement {
+export function place({ anchor: a, floating: f, viewport: vp, side = 'bottom', align = 'center', offset = 8, padding = 8, arrowPadding = 12, minSize }: PlaceInput): Placement {
   const space = spaceAround(a, vp);
   const vertical = side === 'top' || side === 'bottom';
-  const need = (vertical ? f.height : f.width) + offset + padding;
+  const size0 = vertical ? f.height : f.width;
+  const need = (minSize != null ? Math.min(size0, minSize) : size0) + offset + padding;
   let s = side;
   if (space[side] < need && space[OPPOSITE[side]] > space[side]) s = OPPOSITE[side];
+  const available = Math.max(0, space[s] - offset - padding);
+  // กล่องสูง/กว้างเกินที่ว่าง (และจะถูกบีบด้วย maxHeight ฝั่ง UI) → คำนวณตำแหน่งจากขนาดที่บีบแล้ว
+  const fh = vertical ? Math.min(f.height, available) : f.height;
+  const fw = vertical ? f.width : Math.min(f.width, available);
 
   let top: number;
   let left: number;
   if (vertical) {
-    top = s === 'bottom' ? a.top + a.height + offset : a.top - offset - f.height;
+    top = s === 'bottom' ? a.top + a.height + offset : a.top - offset - fh;
     left = align === 'start' ? a.left : align === 'end' ? a.left + a.width - f.width : a.left + a.width / 2 - f.width / 2;
     left = shift(left, f.width, vp.width, padding);
   } else {
-    left = s === 'right' ? a.left + a.width + offset : a.left - offset - f.width;
+    left = s === 'right' ? a.left + a.width + offset : a.left - offset - fw;
     top = align === 'start' ? a.top : align === 'end' ? a.top + a.height - f.height : a.top + a.height / 2 - f.height / 2;
     top = shift(top, f.height, vp.height, padding);
   }
@@ -62,7 +74,7 @@ export function place({ anchor: a, floating: f, viewport: vp, side = 'bottom', a
   const center = vertical ? a.left + a.width / 2 - left : a.top + a.height / 2 - top;
   const size = vertical ? f.width : f.height;
   const arrow = Math.min(Math.max(center, arrowPadding), Math.max(arrowPadding, size - arrowPadding));
-  return { top: Math.round(top), left: Math.round(left), side: s, arrow: Math.round(arrow) };
+  return { top: Math.round(top), left: Math.round(left), side: s, arrow: Math.round(arrow), available: Math.floor(available) };
 }
 
 function shift(pos: number, size: number, max: number, pad: number) {

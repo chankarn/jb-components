@@ -1,13 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import * as React from 'react';
+import { AlertOctagon, AlertTriangle, ArrowDownRight, ArrowRight, ArrowUpRight, CheckCircle2, ChevronDown, Info, Lightbulb, Minus, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n/client';
 import { EmptyState } from '@/components/EmptyState';
 import { HelpTip } from '@/components/HelpTip';
 import { Select } from '@/components/Select';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatedNumber } from '@/components/AnimatedNumber';
+import { Collapse } from '@/components/Accordion';
+import { sparkPath } from '@/lib/chart-math';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, rowClass } from '@/components/Table';
 
 /* ── ตาราง ── */
@@ -257,93 +261,213 @@ export function Pagination({
 /* ── Drawer / Dialog: ย้ายไปเป็นหน้าต่างชุดใหม่ใน components/Overlay.tsx (API เดิมใช้ได้ + ตัวเลือกใหม่) ── */
 export { Dialog, Drawer } from '@/components/Overlay';
 
-/** การ์ดหัวข้อของฟอร์ม: หัวเรียบ (ขีดสี brand ซ้ายหัวข้อ + เส้นคั่นบางๆ) แล้วเนื้อหาด้านล่าง */
-export function SectionCard({ title, hint, help, children, className }: { title: string; hint?: string; /** คำอธิบายยาว แสดงเมื่อกดไอคอน ? ข้างหัวข้อ */ help?: string; children: React.ReactNode; className?: string }) {
+type Tone = 'default' | 'done' | 'warn' | 'danger';
+const TONE_TILE: Record<Tone, string> = {
+  default: 'bg-brand-100 text-brand-link',
+  done: 'bg-ok-50 text-ok-600',
+  warn: 'bg-warn-50 text-warn-700',
+  danger: 'bg-danger-50 text-danger-600',
+};
+const TONE_RGB: Record<Tone, string> = { default: 'var(--brand-500)', done: 'var(--ok-500)', warn: 'var(--warn-500)', danger: 'var(--danger-500)' };
+const TONE_DOT: Record<Tone, string> = { default: 'bg-ink/40', done: 'bg-ok-500', warn: 'bg-warn-500', danger: 'bg-danger-500' };
+
+/**
+ * การ์ดหัวข้อของฟอร์ม/หน้าตั้งค่า: หัว (ไอคอน · ชื่อ · คำอธิบาย · ปุ่มด้านขวา) แล้วเนื้อหาด้านล่าง
+ * - `collapsible` กดหัวเพื่อพับ/กาง (ยืดหดนุ่ม · `defaultOpen`)
+ * - `help` = คำอธิบายยาว แสดงเมื่อกดไอคอน ? ข้างหัวข้อ
+ */
+export function SectionCard({ title, hint, help, icon, actions, collapsible, defaultOpen = true, children, className }: {
+  title: string;
+  hint?: string;
+  help?: string;
+  icon?: React.ReactNode;
+  /** ปุ่ม/ลิงก์ชิดขวาของหัวการ์ด */
+  actions?: React.ReactNode;
+  collapsible?: boolean;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const bodyId = React.useId();
+  const heading = (
+    <span className="flex min-w-0 items-start gap-3">
+      {icon ? (
+        <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-100 text-brand-link">{icon}</span>
+      ) : (
+        <span aria-hidden className="mt-1 h-5 w-1 shrink-0 rounded-full bg-gradient-to-b from-brand-500 to-brand-700" />
+      )}
+      <span className="min-w-0">
+        <span className="flex items-center gap-1.5 text-base font-semibold leading-snug text-ink">{title}{help && <HelpTip text={help} />}</span>
+        {hint && <span className="mt-0.5 block text-xs leading-relaxed text-ink-mute">{hint}</span>}
+      </span>
+    </span>
+  );
   return (
-    <section className={cn('rounded-card bg-surface shadow-card', className)}>
-      <header className="border-b border-ink/8 px-6 py-4">
-        <h2 className="flex items-center gap-2.5 text-base font-bold leading-tight">
-          <span aria-hidden className="h-5 w-1 rounded-full bg-brand-600" />
-          {title}
-          {help && <HelpTip text={help} />}
-        </h2>
-        {hint && <p className="mt-1 pl-[14px] text-xs text-ink-mute">{hint}</p>}
+    <section className={cn('overflow-hidden rounded-card bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.04),0_0_0_1px_rgb(var(--ink)/0.06)]', className)}>
+      <header className={cn('flex items-center gap-3 px-6 py-4', (!collapsible || open) && 'border-b border-ink/[0.06]')}>
+        {collapsible ? (
+          <button
+            type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls={bodyId}
+            className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
+          >
+            {heading}
+            <ChevronDown aria-hidden size={18} className={cn('shrink-0 text-ink-mute transition-transform duration-300', open && 'rotate-180')} />
+          </button>
+        ) : (
+          <h2 className="m-0 min-w-0 flex-1 font-sans">{heading}</h2>
+        )}
+        {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       </header>
-      <div className="space-y-6 p-6">{children}</div>
+      {collapsible ? (
+        <Collapse open={open} id={bodyId}><div className="space-y-6 p-6">{children}</div></Collapse>
+      ) : (
+        <div className="space-y-6 p-6">{children}</div>
+      )}
     </section>
   );
 }
 
-/* ── การ์ดตัวเลขสรุป ── */
+/** เส้นแนวโน้มจิ๋วในการ์ดตัวเลข (พื้นไล่สีจางลงล่าง) */
+function MiniTrend({ values, tone }: { values: number[]; tone: Tone }) {
+  const id = React.useId().replace(/:/g, '');
+  const { line, area } = sparkPath(values, 100, 32, 3);
+  if (!line) return null;
+  return (
+    <svg viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden className="stat-trend h-9 w-full overflow-visible">
+      <defs>
+        <linearGradient id={`st${id}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={`rgb(${TONE_RGB[tone]})`} stopOpacity="0.22" />
+          <stop offset="100%" stopColor={`rgb(${TONE_RGB[tone]})`} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill={`url(#st${id})`} />
+      <path d={line} fill="none" stroke={`rgb(${TONE_RGB[tone]})`} strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/**
+ * การ์ดตัวเลขสรุป
+ * - ตัวเลขวิ่งขึ้นตอนเลื่อนมาเห็น (เมื่อ value เป็นตัวเลข) · `format` กำหนดรูปแบบ เช่น `฿${n}`
+ * - `icon` ในกรอบสีตาม `tone` · `delta` = % เปลี่ยนแปลง (ชิป ↑ เขียว / ↓ แดง · `deltaInverse` เมื่อ "ลด = ดี" เช่น จำนวนค้าง)
+ * - `trend` = ชุดตัวเลขย้อนหลัง วาดเป็นเส้นจิ๋ว · `onClick` → การ์ดกดได้ ยกขึ้นตอนชี้พร้อมลูกศร
+ * - การ์ดในแถวเดียวกันสูงเท่ากันเสมอ (มี/ไม่มี hint ก็ตรงกัน)
+ */
 export function StatCard({
-  label,
-  value,
-  hint,
-  tone = 'default',
-  onClick,
+  label, value, hint, tone = 'default', onClick, icon, delta, deltaInverse, trend, format,
 }: {
   label: string;
   value: string | number;
   hint?: string;
-  tone?: 'default' | 'done' | 'warn' | 'danger';
+  tone?: Tone;
   onClick?: () => void;
+  icon?: React.ReactNode;
+  delta?: number | null;
+  deltaInverse?: boolean;
+  trend?: number[];
+  format?: (n: number) => string;
 }) {
-  const color = {
-    default: 'text-ink',
-    done: 'text-ok-600',
-    warn: 'text-warn-600',
-    danger: 'text-danger-600',
-  }[tone];
-
+  const good = delta != null && (deltaInverse ? delta < 0 : delta > 0);
+  const flat = delta === 0;
+  const Tag = onClick ? 'button' : 'div';
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={!onClick}
+    <Tag
+      {...(onClick ? { type: 'button' as const, onClick } : {})}
       className={cn(
-        'rounded-card bg-surface p-4 text-left shadow-card transition',
-        onClick && 'hover:shadow-lift',
+        'stat-card group relative flex h-full min-h-[8.5rem] flex-col overflow-hidden rounded-card bg-surface p-4 text-left',
+        'shadow-[0_1px_2px_rgb(0_0_0/0.04),0_0_0_1px_rgb(var(--ink)/0.06)] transition-[transform,box-shadow] duration-300',
+        onClick && 'cursor-pointer hover:-translate-y-0.5 hover:shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50',
       )}
+      style={{ ['--stat' as string]: TONE_RGB[tone] }}
     >
-      <p className="text-xs font-semibold text-ink-mute">{label}</p>
-      <p className={cn('mt-1 text-2xl font-extrabold', color)}>{value}</p>
-      {hint && <p className="mt-0.5 text-[11px] text-ink-mute">{hint}</p>}
-    </button>
+      {/* แสงจางตามโทนที่มุมขวาบน */}
+      <span aria-hidden className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full opacity-60 transition-opacity duration-300 group-hover:opacity-100" style={{ background: `radial-gradient(circle, rgb(${TONE_RGB[tone]} / 0.14), transparent 70%)` }} />
+      <div className="relative flex items-start justify-between gap-2">
+        <p className="text-xs font-semibold text-ink-mute">{label}</p>
+        {icon && <span aria-hidden className={cn('grid size-8 shrink-0 place-items-center rounded-lg', TONE_TILE[tone])}>{icon}</span>}
+      </div>
+      <p className={cn('relative mt-1 text-[1.75rem] font-semibold leading-tight tracking-tight', tone === 'default' ? 'text-ink' : { done: 'text-ok-700', warn: 'text-warn-700', danger: 'text-danger-700' }[tone])}>
+        {typeof value === 'number' ? <AnimatedNumber value={value} format={format} /> : value}
+      </p>
+      {trend && trend.length > 1 && <div className="relative -mx-1 mt-1"><MiniTrend values={trend} tone={tone} /></div>}
+      <div className="relative mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-2">
+        {delta != null && (
+          <span className={cn('inline-flex items-center gap-0.5 rounded-pill px-1.5 py-0.5 text-[11px] font-bold tabular-nums', flat ? 'bg-ink/[0.06] text-ink-mute' : good ? 'bg-ok-50 text-ok-700' : 'bg-danger-50 text-danger-700')}>
+            {flat ? <Minus size={11} strokeWidth={3} /> : delta > 0 ? <ArrowUpRight size={12} strokeWidth={3} /> : <ArrowDownRight size={12} strokeWidth={3} />}
+            {Math.abs(delta).toLocaleString()}%
+          </span>
+        )}
+        {hint && <span className="text-[11px] text-ink-mute">{hint}</span>}
+        {onClick && <ArrowRight aria-hidden size={15} className="ml-auto -translate-x-1 text-ink-mute opacity-0 transition duration-300 group-hover:translate-x-0 group-hover:opacity-100" />}
+      </div>
+    </Tag>
   );
 }
 
-/* ── หัวหน้าทุกหน้าหลังบ้าน (FR-A-01 ข้อ 6): H1 + แถบสรุปตัวเลข + ปุ่มด้านขวา ── */
-export function AdminPageHeader({
-  title,
-  stats,
-  actions,
-}: {
+/**
+ * หัวหน้าทุกหน้าหลังบ้าน (FR-A-01 ข้อ 6): breadcrumb/eyebrow · H1 · คำอธิบาย · ชิปสรุปตัวเลข · ปุ่มด้านขวา
+ */
+export function AdminPageHeader({ title, stats, actions, description, breadcrumb }: {
   title: string;
   /** เช่น [{ label: 'คอร์สทั้งหมด', value: 8 }, { label: 'เผยแพร่', value: 6, tone: 'done' }] */
-  stats?: { label: string; value: string | number; tone?: 'default' | 'done' | 'warn' | 'danger' }[];
+  stats?: { label: string; value: string | number; tone?: Tone }[];
   actions?: React.ReactNode;
+  description?: React.ReactNode;
+  /** วาง <Breadcrumb/> หรือข้อความเล็กเหนือหัวข้อ */
+  breadcrumb?: React.ReactNode;
 }) {
-  const tone = { default: 'text-ink', done: 'text-ok-700', warn: 'text-warn-700', danger: 'text-danger-700' };
   return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-      <div className="min-w-0">
-        <h1 className="text-2xl font-bold leading-tight">{title}</h1>
-        {stats && stats.length > 0 && (
-          <p className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-sm text-ink-mute">
-            {stats.map((s) => (
-              <span key={s.label}>
-                {s.label} <b className={cn('ml-1 font-bold', tone[s.tone ?? 'default'])}>{s.value}</b>
-              </span>
-            ))}
-          </p>
-        )}
+    <div className="mb-5 space-y-3">
+      {breadcrumb}
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+        <div className="min-w-0">
+          <h1 className="text-[1.65rem] font-bold leading-tight tracking-tight text-ink">{title}</h1>
+          {description && <p className="mt-1 max-w-2xl text-sm leading-relaxed text-ink-mute">{description}</p>}
+        </div>
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      {stats && stats.length > 0 && (
+        <ul className="flex flex-wrap gap-2">
+          {stats.map((s) => (
+            <li key={s.label} className="inline-flex items-center gap-2 rounded-pill bg-surface py-1 pl-2.5 pr-3 text-xs text-ink-soft shadow-[0_0_0_1px_rgb(var(--ink)/0.08)]">
+              <span aria-hidden className={cn('size-1.5 rounded-full', TONE_DOT[s.tone ?? 'default'])} />
+              {s.label}
+              <b className="font-bold tabular-nums text-ink">{s.value}</b>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
 
-/* ── กล่องคำแนะนำท้ายหน้า (note info) ── */
-export function InfoNote({ children }: { children: React.ReactNode }) {
-  return <div className="mt-6 rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink-soft">{children}</div>;
+const NOTE_TONE = {
+  // info เป็นสีกลาง (ไม่ใช้สีแบรนด์ — แบรนด์สีแดงจะทำให้หมายเหตุธรรมดาดูเป็นข้อผิดพลาด)
+  info: { box: 'bg-ink/[0.04] text-ink-soft', bar: 'bg-ink/25', icon: Info, iconC: 'text-ink-mute' },
+  tip: { box: 'bg-accent-2/[0.08] text-ink-soft', bar: 'bg-accent-2', icon: Lightbulb, iconC: 'text-ok-700' },
+  success: { box: 'bg-ok-50 text-ink-soft', bar: 'bg-ok-500', icon: CheckCircle2, iconC: 'text-ok-700' },
+  warn: { box: 'bg-warn-50 text-ink-soft', bar: 'bg-warn-500', icon: AlertTriangle, iconC: 'text-warn-700' },
+  danger: { box: 'bg-danger-50 text-ink-soft', bar: 'bg-danger-500', icon: AlertOctagon, iconC: 'text-danger-700' },
+} as const;
+
+/** กล่องคำแนะนำ/หมายเหตุ: แถบสีซ้าย + ไอคอนตาม `tone` (info · tip · success · warn · danger) + หัวข้อ (ไม่บังคับ) */
+export function InfoNote({ children, tone = 'info', title, className }: {
+  children: React.ReactNode;
+  tone?: keyof typeof NOTE_TONE;
+  title?: string;
+  className?: string;
+}) {
+  const t = NOTE_TONE[tone];
+  const Icon = t.icon;
+  return (
+    <div role={tone === 'danger' || tone === 'warn' ? 'note' : undefined} className={cn('relative mt-6 flex gap-3 overflow-hidden rounded-2xl py-3.5 pl-5 pr-4 text-sm leading-relaxed', t.box, className)}>
+      <span aria-hidden className={cn('absolute inset-y-0 left-0 w-1', t.bar)} />
+      <Icon aria-hidden size={18} className={cn('mt-0.5 shrink-0', t.iconC)} />
+      <div className="min-w-0">
+        {title && <p className="mb-0.5 font-semibold text-ink">{title}</p>}
+        {children}
+      </div>
+    </div>
+  );
 }

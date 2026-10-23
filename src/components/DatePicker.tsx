@@ -4,6 +4,7 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, X } from 'lucide-react';
+import { mergeRefs, useFloating } from '@/components/Popover';
 import { cn } from '@/lib/utils';
 import { useLang, useT } from '@/lib/i18n/client';
 import {
@@ -58,19 +59,11 @@ export function DatePicker({ value, onChange, min, max, withTime, clearable, dis
   const [view, setView] = React.useState<{ y: number; m: number }>(() => ({ y: (selected ?? todayYmd()).y, m: (selected ?? todayYmd()).m }));
   const [cursor, setCursor] = React.useState<YMD>(() => selected ?? todayYmd());
   const [yearPage, setYearPage] = React.useState(0);
-  const [pos, setPos] = React.useState<{ left: number; top?: number; bottom?: number } | null>(null);
 
   const out = (v: string) => (withTime ? `${v}T${pad2(time[0])}:${pad2(time[1])}` : v);
 
-  const place = React.useCallback(() => {
-    const r = trigger.current?.getBoundingClientRect();
-    if (!r) return;
-    const width = 312;
-    const height = withTime ? 430 : 380;
-    const flip = window.innerHeight - r.bottom < height + 16 && r.top > window.innerHeight - r.bottom;
-    const left = Math.min(Math.max(8, r.left), window.innerWidth - width - 8);
-    setPos({ left, ...(flip ? { bottom: window.innerHeight - r.top + 6 } : { top: r.bottom + 6 }) });
-  }, [withTime]);
+  // ตำแหน่งปฏิทิน: ตัววางตำแหน่งกลาง (พลิกขึ้นเมื่อด้านล่างไม่พอ · เลื่อนหนีขอบจอ · ตามช่องตอนเลื่อนหน้า · ขนาดเปลี่ยน เช่น สลับไปหน้าปี ก็จัดใหม่เอง)
+  const { setFloating, pos } = useFloating(open, trigger, { side: 'bottom', align: 'start', offset: 6 });
 
   function show() {
     if (disabled) return;
@@ -78,7 +71,6 @@ export function DatePicker({ value, onChange, min, max, withTime, clearable, dis
     setView({ y: start.y, m: start.m });
     setCursor(start);
     setMode('days');
-    place();
     setOpen(true);
   }
   const close = (refocus = true) => {
@@ -93,17 +85,10 @@ export function DatePicker({ value, onChange, min, max, withTime, clearable, dis
       const el = e.target as Node;
       if (!panel.current?.contains(el) && !trigger.current?.contains(el)) setOpen(false);
     };
-    // เลื่อนหน้า/ย่อขยายจอ: ตามตำแหน่งช่องไปเรื่อยๆ ไม่ปิด (dialog ที่เลื่อนได้ เลื่อนเองตอนโฟกัส ถ้าปิดทุกครั้งที่เลื่อนจะปิดทันทีที่เปิด)
-    const follow = () => place();
+    // เลื่อนหน้า/ย่อขยายจอ: useFloating ตามตำแหน่งช่องให้ ไม่ปิด (dialog ที่เลื่อนได้ เลื่อนเองตอนโฟกัส ถ้าปิดทุกครั้งที่เลื่อนจะปิดทันทีที่เปิด)
     document.addEventListener('mousedown', down);
-    window.addEventListener('scroll', follow, true);
-    window.addEventListener('resize', follow);
-    return () => {
-      document.removeEventListener('mousedown', down);
-      window.removeEventListener('scroll', follow, true);
-      window.removeEventListener('resize', follow);
-    };
-  }, [open, place]);
+    return () => document.removeEventListener('mousedown', down);
+  }, [open]);
 
   // ย้ายโฟกัสไปวันที่ cursor ชี้ (roving tabindex)
   React.useEffect(() => {
@@ -189,11 +174,11 @@ export function DatePicker({ value, onChange, min, max, withTime, clearable, dis
       {typeof document !== 'undefined' &&
         createPortal(
           <AnimatePresence>
-            {open && pos && (
+            {open && (
               <motion.div data-floating
-                ref={panel} id={uid} role="dialog" aria-label={t('cal.pick_date')} onKeyDown={onPanelKey}
-                initial={reduce ? false : { opacity: 0, y: pos.bottom !== undefined ? 6 : -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, transition: { duration: 0.12 } }} transition={{ duration: 0.16, ease: 'easeOut' }}
-                style={{ position: 'fixed', left: pos.left, top: pos.top, bottom: pos.bottom }}
+                ref={mergeRefs(panel, setFloating)} id={uid} role="dialog" aria-label={t('cal.pick_date')} onKeyDown={onPanelKey}
+                initial={reduce ? false : { opacity: 0, y: pos?.side === 'top' ? 6 : -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, transition: { duration: 0.12 } }} transition={{ duration: 0.16, ease: 'easeOut' }}
+                style={{ position: 'fixed', left: pos?.left ?? 0, top: pos?.top ?? 0, visibility: pos ? undefined : 'hidden' }}
                 className="z-[300] w-[312px] overflow-hidden rounded-3xl border border-ink/10 bg-surface p-4 text-ink shadow-lift"
               >
                 <div className="mb-3 flex items-center gap-1">

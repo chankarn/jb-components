@@ -257,6 +257,7 @@ export const th = {
   'loading.label': 'กำลังโหลด',
   'loading.done': 'เสร็จแล้ว',
   'loading.failed': 'ไม่สำเร็จ',
+  'toast.region': 'การแจ้งเตือน',
   'cal.pick_range': 'เลือกช่วงวันที่',
   'cal.range_start': 'วันเริ่ม',
   'cal.range_end': 'วันสิ้นสุด',

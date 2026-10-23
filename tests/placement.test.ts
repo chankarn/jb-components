@@ -7,7 +7,7 @@ const floating = { width: 200, height: 120 };
 
 describe('placement: place', () => {
   it('ด้านล่างกึ่งกลาง (ค่าตั้งต้น) · ลูกศรชี้กลางตัวยึด', () => {
-    expect(place({ anchor, floating, viewport: vp })).toEqual({ top: 148, left: 350, side: 'bottom', arrow: 100 });
+    expect(place({ anchor, floating, viewport: vp })).toEqual({ top: 148, left: 350, side: 'bottom', arrow: 100, available: 800 - 140 - 16 });
   });
   it('align start / end', () => {
     expect(place({ anchor, floating, viewport: vp, align: 'start' }).left).toBe(400);
@@ -42,9 +42,23 @@ describe('placement: place', () => {
     expect(place({ anchor, floating, viewport: vp, side: 'right' })).toMatchObject({ side: 'right', left: 508, top: 60 });
     expect(place({ anchor: { ...anchor, left: 20 }, floating, viewport: vp, side: 'left' }).side).toBe('right');
   });
+  it('minSize: รายการยาวที่หดได้ ไม่พลิกถ้าที่ว่างพอขั้นต่ำ · available บอกที่ว่างฝั่งที่วาง', () => {
+    const tall = { width: 200, height: 600 };
+    const a = { top: 300, left: 400, width: 100, height: 40 }; // ล่างเหลือ 460 บนเหลือ 300
+    expect(place({ anchor: a, floating: tall, viewport: vp }).side).toBe('bottom'); // ล่างมากกว่า ไม่พลิกอยู่แล้ว
+    const b = { ...a, top: 520 }; // ล่างเหลือ 240 บนเหลือ 520
+    expect(place({ anchor: b, floating: tall, viewport: vp }).side).toBe('top'); // ไม่มี minSize → พลิกหาที่มากกว่า
+    const keep = place({ anchor: b, floating: tall, viewport: vp, minSize: 220 });
+    expect(keep).toMatchObject({ side: 'bottom', available: 240 - 16 });
+  });
+  it('พลิกขึ้นแล้วกล่องสูงเกินที่ว่าง → ชิดตัวยึดด้วยความสูงที่ถูกบีบ', () => {
+    const p = place({ anchor: { top: 700, left: 400, width: 100, height: 40 }, floating: { width: 200, height: 1000 }, viewport: vp });
+    expect(p).toMatchObject({ side: 'top', available: 700 - 16 });
+    expect(p.top).toBe(700 - 8 - 684);
+  });
   it('originFor', () => {
-    expect(originFor({ top: 0, left: 0, side: 'bottom', arrow: 30 })).toBe('30px top');
-    expect(originFor({ top: 0, left: 0, side: 'left', arrow: 10 })).toBe('right 10px');
+    expect(originFor({ top: 0, left: 0, side: 'bottom', arrow: 30, available: 0 })).toBe('30px top');
+    expect(originFor({ top: 0, left: 0, side: 'left', arrow: 10, available: 0 })).toBe('right 10px');
   });
 });
 

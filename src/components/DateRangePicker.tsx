@@ -4,6 +4,7 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CalendarRange, Check, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { mergeRefs, useFloating } from '@/components/Popover';
 import { cn } from '@/lib/utils';
 import { useLang, useT } from '@/lib/i18n/client';
 import {
@@ -24,8 +25,6 @@ const TRIGGER: Record<Variant, string> = {
 
 const MONTH_W = 252; // 7 ช่อง × 36px
 const MONTH_GAP = 24;
-const PRESET_W = 164;
-const PAD = 32;
 
 type Props = {
   /** ช่วงที่เลือก `{ from, to }` เป็น `YYYY-MM-DD` (ค.ศ.) · null = ยังไม่เลือก */
@@ -78,7 +77,6 @@ export function DateRangePicker({
   const [cursor, setCursor] = React.useState<YMD>(() => committed?.from ?? today);
   const [anchor, setAnchor] = React.useState<YMD | null>(null);
   const [hover, setHover] = React.useState<YMD | null>(null);
-  const [pos, setPos] = React.useState<{ left: number; top?: number; bottom?: number } | null>(null);
 
   const presetKeys: PresetKey[] = presets === false ? [] : Array.isArray(presets) ? presets : PRESET_KEYS;
   const presetList = React.useMemo(
@@ -93,18 +91,10 @@ export function DateRangePicker({
   );
   const hasPresets = presetList.length > 0;
 
-  const place = React.useCallback(() => {
-    const r = trigger.current?.getBoundingClientRect();
-    if (!r) return;
-    const wide = window.innerWidth >= 720;
-    const n: 1 | 2 = wide ? 2 : 1;
-    setMonths(n);
-    const width = n * MONTH_W + (n - 1) * MONTH_GAP + PAD + (wide && hasPresets ? PRESET_W : 0);
-    const height = wide ? 410 : hasPresets ? 500 : 440;
-    const flip = window.innerHeight - r.bottom < height + 16 && r.top > window.innerHeight - r.bottom;
-    const left = Math.min(Math.max(8, r.left), Math.max(8, window.innerWidth - width - 8));
-    setPos({ left, ...(flip ? { bottom: window.innerHeight - r.top + 6 } : { top: r.bottom + 6 }) });
-  }, [hasPresets]);
+  // จอกว้างแสดง 2 เดือน จอแคบ 1 เดือน (คิดใหม่ตอนเปิดและตอนย่อขยายจอ)
+  const syncMonths = React.useCallback(() => setMonths(window.innerWidth >= 720 ? 2 : 1), []);
+  // ตำแหน่งแผง: ตัววางตำแหน่งกลาง (พลิกขึ้นเมื่อด้านล่างไม่พอ · เลื่อนหนีขอบจอ · ตามช่องตอนเลื่อนหน้า · จำนวนเดือนเปลี่ยนก็จัดใหม่เอง)
+  const { setFloating, pos } = useFloating(open, trigger, { side: 'bottom', align: 'start', offset: 6 });
 
   function show() {
     if (disabled) return;
@@ -113,7 +103,7 @@ export function DateRangePicker({
     setCursor(start);
     setAnchor(null);
     setHover(null);
-    place();
+    syncMonths();
     setOpen(true);
   }
   const close = (refocus = true) => {
@@ -129,16 +119,13 @@ export function DateRangePicker({
       const el = e.target as Node;
       if (!panel.current?.contains(el) && !trigger.current?.contains(el)) close(false);
     };
-    const follow = () => place();
     document.addEventListener('mousedown', down);
-    window.addEventListener('scroll', follow, true);
-    window.addEventListener('resize', follow);
+    window.addEventListener('resize', syncMonths);
     return () => {
       document.removeEventListener('mousedown', down);
-      window.removeEventListener('scroll', follow, true);
-      window.removeEventListener('resize', follow);
+      window.removeEventListener('resize', syncMonths);
     };
-  }, [open, place]);
+  }, [open, syncMonths]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ย้ายโฟกัสไปวันที่ cursor ชี้ (roving tabindex)
   React.useEffect(() => {
@@ -254,11 +241,11 @@ export function DateRangePicker({
       {typeof document !== 'undefined' &&
         createPortal(
           <AnimatePresence>
-            {open && pos && (
+            {open && (
               <motion.div data-floating
-                ref={panel} id={uid} role="dialog" aria-label={t('cal.pick_range')} onKeyDown={onPanelKey}
-                initial={reduce ? false : { opacity: 0, y: pos.bottom !== undefined ? 6 : -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, transition: { duration: 0.12 } }} transition={{ duration: 0.16, ease: 'easeOut' }}
-                style={{ position: 'fixed', left: pos.left, top: pos.top, bottom: pos.bottom, maxWidth: 'calc(100vw - 16px)' }}
+                ref={mergeRefs(panel, setFloating)} id={uid} role="dialog" aria-label={t('cal.pick_range')} onKeyDown={onPanelKey}
+                initial={reduce ? false : { opacity: 0, y: pos?.side === 'top' ? 6 : -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, transition: { duration: 0.12 } }} transition={{ duration: 0.16, ease: 'easeOut' }}
+                style={{ position: 'fixed', left: pos?.left ?? 0, top: pos?.top ?? 0, maxWidth: 'calc(100vw - 16px)', visibility: pos ? undefined : 'hidden' }}
                 className="z-[300] overflow-hidden rounded-3xl border border-ink/10 bg-surface p-4 text-ink shadow-lift"
               >
                 <div className="flex gap-4">

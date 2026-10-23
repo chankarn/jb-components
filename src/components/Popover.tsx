@@ -15,12 +15,14 @@ export type { Side, Align };
  * - กล่องทุกตัวติด data-floating → คลิกในกล่องซ้อน (เมนูใน popover) ไม่นับเป็น "คลิกนอก" ของกล่องแม่
  * ───────────────────────────────────────────────────────────── */
 
-type FloatOpts = { side?: Side; align?: Align; offset?: number; padding?: number };
+type FloatOpts = { side?: Side; align?: Align; offset?: number; padding?: number; /** ขนาดขั้นต่ำที่พอใช้ก่อนพลิก (รายการที่หดด้วย maxHeight ได้) */ minSize?: number };
 
 /** ติดตามตำแหน่งกล่องลอยเทียบกับตัวยึด ขณะเปิดอยู่ */
-export function useFloating(open: boolean, anchor: React.RefObject<HTMLElement | null>, { side = 'bottom', align = 'center', offset = 8, padding = 8 }: FloatOpts = {}) {
-  const floating = React.useRef<HTMLDivElement | null>(null);
+export function useFloating(open: boolean, anchor: React.RefObject<HTMLElement | null>, { side = 'bottom', align = 'center', offset = 8, padding = 8, minSize }: FloatOpts = {}) {
+  const floating = React.useRef<HTMLElement | null>(null);
   const [pos, setPos] = React.useState<Placement | null>(null);
+  // ความกว้างตัวยึด (ให้รายการกว้างเท่าช่องได้)
+  const [anchorWidth, setAnchorWidth] = React.useState(0);
 
   const update = React.useCallback(() => {
     const a = anchor.current;
@@ -31,13 +33,14 @@ export function useFloating(open: boolean, anchor: React.RefObject<HTMLElement |
       anchor: { top: r.top, left: r.left, width: r.width, height: r.height },
       floating: { width: f.offsetWidth, height: f.offsetHeight },
       viewport: { width: document.documentElement.clientWidth, height: window.innerHeight },
-      side, align, offset, padding,
+      side, align, offset, padding, minSize,
     });
-    setPos((p) => (p && p.top === next.top && p.left === next.left && p.side === next.side && p.arrow === next.arrow ? p : next));
-  }, [anchor, side, align, offset, padding]);
+    setAnchorWidth((w) => (Math.abs(w - r.width) < 0.5 ? w : r.width));
+    setPos((p) => (p && p.top === next.top && p.left === next.left && p.side === next.side && p.arrow === next.arrow && p.available === next.available ? p : next));
+  }, [anchor, side, align, offset, padding, minSize]);
 
   // ref callback: กล่อง mount เมื่อไหร่วัดทันที (ก่อน paint) — ไม่เห็นกล่องกระโดดจากมุมจอ
-  const setFloating = React.useCallback((el: HTMLDivElement | null) => {
+  const setFloating = React.useCallback((el: HTMLElement | null) => {
     floating.current = el;
     if (el) update();
   }, [update]);
@@ -61,7 +64,7 @@ export function useFloating(open: boolean, anchor: React.RefObject<HTMLElement |
     };
   }, [open, update, anchor]);
 
-  return { setFloating, pos, update };
+  return { setFloating, pos, update, anchorWidth };
 }
 
 /** ปิดเมื่อกดนอกตัวยึด/กล่อง (ไม่นับกล่องลอยซ้อนข้างใน) */

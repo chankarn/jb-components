@@ -239,6 +239,7 @@ export const en: Record<DictKey, string> = {
   'loading.label': 'Loading',
   'loading.done': 'Done',
   'loading.failed': 'Failed',
+  'toast.region': 'Notifications',
   'cal.pick_range': 'Pick a date range',
   'cal.range_start': 'Start',
   'cal.range_end': 'End',

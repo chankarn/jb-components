@@ -453,3 +453,19 @@ video.no-skip::-webkit-media-controls-seek-forward-button { display: none !impor
 @media (prefers-reduced-motion: reduce) {
   .modal-body > *, .modal-icon, .modal-icon-ring, .modal-aurora { animation: none; }
 }
+
+/* ── Toast (components/Toaster.tsx): ไอคอนเด้งเข้า (เล่นใหม่ตอนแปลงร่าง loading → ผลลัพธ์) · ติ๊กวาดเส้น · เส้นนับถอยหลัง ── */
+.toast-icon { animation: toast-icon .45s cubic-bezier(.34, 1.56, .64, 1) both; }
+@keyframes toast-icon { from { transform: scale(.5) rotate(-10deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.toast-check { stroke-dasharray: 1; stroke-dashoffset: 1; animation: lb-draw .4s cubic-bezier(.65, 0, .35, 1) .18s forwards; }
+.toast-countdown { animation-name: toast-countdown; animation-timing-function: linear; animation-fill-mode: forwards; }
+@keyframes toast-countdown { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .toast-icon { animation: none; }
+  .toast-check { animation: none; stroke-dashoffset: 0; }
+}
+
+/* ── StatCard: เส้นแนวโน้มวาดจากซ้ายไปขวาตอนโผล่ ── */
+.stat-trend { animation: stat-reveal 1.1s cubic-bezier(.65, 0, .35, 1) .2s both; }
+@keyframes stat-reveal { from { clip-path: inset(-20% 100% -20% 0); } to { clip-path: inset(-20% 0 -20% 0); } }
+@media (prefers-reduced-motion: reduce) { .stat-trend { animation: none; } }

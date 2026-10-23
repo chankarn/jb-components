@@ -46,7 +46,7 @@ import { Breadcrumb } from '@/components/Breadcrumb';
 import { Stepper } from '@/components/Stepper';
 import { TagInput } from '@/components/TagInput';
 import { Loader, LoadingButton, LoadingOverlay, TopProgress, type LoaderVariant, type LoadingStatus } from '@/components/Loading';
-import { Bell, Bold, ChevronDown, Copy, CreditCard, FileDown, Filter, Folder, Home, Italic, LogOut, Package, Settings, Share2, ShieldCheck, Underline, User } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, Bell, Bold, ChevronDown, Copy, CreditCard, FileDown, Filter, Folder, Home, Italic, LogOut, Package, Settings, Share2, ShieldCheck, Underline, User } from 'lucide-react';
 
 const SCALES: [string, string[]][] = [
   ['brand', ['50', '100', '200', '300', '400', '500', '600', '700']],
@@ -811,13 +811,17 @@ export function Gallery() {
         </div>
       </Section>
 
-      <Section title="toast / confirmDialog">
+      <Section title="toast">
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" onClick={() => toast.success('บันทึกแล้ว')}>success</Button>
-          <Button size="sm" variant="outline" onClick={() => toast.error('ผิดพลาด')}>error</Button>
-          <Button size="sm" variant="outline" onClick={() => toast.info('ข้อมูล')}>info</Button>
-          <Button size="sm" variant="danger" onClick={async () => toast.info((await confirmDialog('ลบรายการนี้?', { danger: true })) ? 'ยืนยัน' : 'ยกเลิก')}>confirm</Button>
+          <Button size="sm" onClick={() => toast.success('บันทึกการเปลี่ยนแปลงแล้ว')}>success</Button>
+          <Button size="sm" variant="outline" onClick={() => toast.error('อัปโหลดไม่สำเร็จ', { description: 'ไฟล์ใหญ่เกิน 10 MB', action: { label: 'ลองใหม่', onClick: () => toast.info('กำลังลองใหม่…') } })}>error + ปุ่ม</Button>
+          <Button size="sm" variant="outline" onClick={() => toast.warning('ใกล้หมดเวลาเซสชัน', { description: 'จะออกจากระบบอัตโนมัติใน 5 นาที' })}>warning</Button>
+          <Button size="sm" variant="outline" onClick={() => toast.info('มีเวอร์ชันใหม่ของแอป')}>info</Button>
+          <Button size="sm" variant="outline" onClick={() => toast.success('ย้ายไปถังขยะแล้ว', { action: { label: 'เลิกทำ', onClick: () => toast.info('กู้คืนแล้ว') } })}>เลิกทำ (undo)</Button>
+          <Button size="sm" variant="dark" onClick={() => { void toast.promise(new Promise((r) => setTimeout(() => r(12), 1800)), { loading: 'กำลังซิงก์ข้อมูล…', success: (n) => `ซิงก์แล้ว ${n} รายการ`, error: 'ซิงก์ไม่สำเร็จ' }); }}>promise สำเร็จ</Button>
+          <Button size="sm" variant="ghost" onClick={() => { void toast.promise(new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 1800)), { loading: 'กำลังส่งอีเมล…', success: 'ส่งแล้ว', error: (e) => `ส่งไม่สำเร็จ (${(e as Error).message})` }).catch(() => {}); }}>promise ล้มเหลว</Button>
         </div>
+        <p className="mt-3 text-xs text-ink-mute">ชี้เมาส์ที่กล่อง = หยุดนับถอยหลัง · ปัดซ้าย/ขวาเพื่อปิด · แสดงพร้อมกันสูงสุด 4 อัน</p>
       </Section>
 
       <Section title="admin/kit: Table · Toolbar · Pagination · RowMenu">
@@ -902,14 +906,36 @@ export function Gallery() {
         </Drawer>
       </Section>
 
-      <Section title="admin/kit: SectionCard · StatCard · PageHeader · InfoNote">
-        <div className="space-y-4">
-          <AdminPageHeader title="หัวหน้าจอ" stats={[{ label: 'ทั้งหมด', value: 8 }, { label: 'เผยแพร่', value: 6, tone: 'done' }, { label: 'ค้าง', value: 2, tone: 'warn' }]} actions={<Button size="sm">เพิ่ม</Button>} />
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard label="ผู้เรียน" value={120} hint="รวมทั้งหมด" /><StatCard label="ผ่าน" value={80} tone="done" /><StatCard label="ค้าง" value={9} tone="warn" /><StatCard label="เลยกำหนด" value={3} tone="danger" onClick={() => toast.info('กดได้')} />
+      <Section title="admin/kit: PageHeader · StatCard · SectionCard · InfoNote">
+        <div className="space-y-5">
+          <AdminPageHeader
+            breadcrumb={<Breadcrumb items={[{ label: 'หลังบ้าน', href: '/' }, { label: 'คอร์สอบรม' }]} />}
+            title="คอร์สอบรม" description="จัดการคอร์ส ผู้เรียน และผลการสอบของทุกแผนก"
+            stats={[{ label: 'ทั้งหมด', value: 8 }, { label: 'เผยแพร่', value: 6, tone: 'done' }, { label: 'ค้างตรวจ', value: 2, tone: 'warn' }]}
+            actions={<><Button size="sm" variant="outline"><Download size={14} /> ส่งออก</Button><Button size="sm"><Plus size={14} /> เพิ่มคอร์ส</Button></>}
+          />
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <StatCard label="ผู้เรียน" value={1284} icon={<User size={16} />} delta={12} hint="จากเดือนก่อน" trend={[820, 900, 870, 960, 1020, 1100, 1180, 1284]} />
+            <StatCard label="สอบผ่าน" value={86.4} format={(n) => `${n.toFixed(1)}%`} tone="done" icon={<CheckCircle2 size={16} />} delta={3.2} trend={[78, 80, 79, 83, 82, 85, 86.4]} />
+            <StatCard label="ค้างตรวจ" value={9} tone="warn" icon={<Clock size={16} />} delta={-25} deltaInverse hint="ลดลงคือดี" />
+            <StatCard label="เลยกำหนด" value={3} tone="danger" icon={<AlertTriangle size={16} />} delta={50} deltaInverse onClick={() => toast.info('ไปหน้ารายการเลยกำหนด')} hint="กดดูรายชื่อ" />
           </div>
-          <SectionCard title="หัวข้อการ์ด" hint="คำอธิบายสั้น" help="คำอธิบายยาว"><p className="text-sm">เนื้อหา</p></SectionCard>
-          <InfoNote>ข้อความอธิบายท้ายหน้า</InfoNote>
+          <SectionCard title="ข้อมูลคอร์ส" hint="ชื่อ คำอธิบาย และรูปปก" help="ข้อมูลส่วนนี้แสดงในหน้ารายการคอร์สของผู้เรียน" actions={<Button size="sm" variant="ghost">แก้ไข</Button>}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="ชื่อคอร์ส"><Input defaultValue="ความปลอดภัยในโรงงาน" /></Field>
+              <Field label="รหัสคอร์ส"><Input defaultValue="SAF-101" /></Field>
+            </div>
+          </SectionCard>
+          <SectionCard title="การตั้งค่าขั้นสูง" hint="กดหัวการ์ดเพื่อพับ/กาง" icon={<Settings size={18} />} collapsible defaultOpen={false}>
+            <Switch className="w-full" placement="start" label="ต้องสอบผ่านก่อนเรียนบทถัดไป" defaultChecked />
+            <Switch className="w-full" placement="start" label="สุ่มลำดับข้อสอบ" />
+          </SectionCard>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <InfoNote className="mt-0">ผู้เรียนจะเห็นคอร์สหลังจากกด "เผยแพร่" เท่านั้น</InfoNote>
+            <InfoNote className="mt-0" tone="tip" title="เคล็ดลับ">ตั้งชื่อคอร์สให้ขึ้นต้นด้วยรหัสแผนก จะค้นหาง่ายขึ้น</InfoNote>
+            <InfoNote className="mt-0" tone="warn" title="ใกล้หมดอายุ">ใบรับรองของผู้เรียน 12 คนจะหมดอายุภายใน 30 วัน</InfoNote>
+            <InfoNote className="mt-0" tone="danger">ลบคอร์สแล้วผลการสอบทั้งหมดจะหายไปด้วย</InfoNote>
+          </div>
         </div>
       </Section>
 

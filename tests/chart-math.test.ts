@@ -58,3 +58,29 @@ describe('chart-math: sliceAt (ตรวจว่ากดโดนชิ้น�
   });
   it('ไม่มีข้อมูล → null', () => expect(sliceAt(...point(10, 82), R, [0, 0])).toBeNull());
 });
+
+import { countUp, percentChange, sparkPath } from '@/lib/chart-math';
+
+describe('sparkPath / countUp / percentChange', () => {
+  it('sparkPath: ค่าต่ำสุดอยู่ล่าง สูงสุดอยู่บน (เว้นขอบ) · พื้นที่ปิดลงฐาน', () => {
+    const { line, area } = sparkPath([0, 10, 5], 100, 20);
+    expect(line).toBe('M0 18 L50 2 L100 10');
+    expect(area).toBe('M0 18 L50 2 L100 10 L100 20 L0 20 Z');
+  });
+  it('sparkPath: ค่าเท่ากัน → เส้นกลาง · จุดเดียว → ว่าง', () => {
+    expect(sparkPath([3, 3], 10, 10).line).toBe('M0 5 L10 5');
+    expect(sparkPath([1], 10, 10)).toEqual({ line: '', area: '' });
+  });
+  it('countUp: เริ่ม/จบตรงค่า · ครึ่งทางเลยครึ่ง (ease-out) · บีบ t', () => {
+    expect(countUp(0, 100, 0)).toBe(0);
+    expect(countUp(0, 100, 1)).toBe(100);
+    expect(countUp(0, 100, 0.5)).toBe(87.5);
+    expect(countUp(50, 0, 2)).toBe(0);
+  });
+  it('percentChange', () => {
+    expect(percentChange(100, 112)).toBe(12);
+    expect(percentChange(80, 77.6)).toBe(-3);
+    expect(percentChange(-50, -25)).toBe(50);
+    expect(percentChange(0, 5)).toBeNull();
+  });
+});

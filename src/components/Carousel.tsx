@@ -72,13 +72,20 @@ export function Carousel({
 
   const commit = (p: number) => { posRef.current = p; setPos(p); };
 
-  /** อยู่บนสำเนาอยู่ → ย้ายไปใบจริงที่หน้าตาเหมือนกันทันที (ขยับ x เท่ากันพอดี ภาพไม่กระตุก) */
+  // ความเร็วที่ต้องส่งต่อให้สปริงถัดไป หลังสลับจากสำเนาไปใบจริงกลางการเคลื่อนที่
+  const carry = React.useRef(0);
+
+  /**
+   * อยู่บนสำเนาอยู่ → ย้ายไปใบจริงที่หน้าตาเหมือนกันทันที (ขยับ x เท่ากันพอดี ภาพไม่กระตุก)
+   * ต้องใช้ x.jump (ไม่ใช่ x.set): set ทำให้ framer นับการกระโดดหลายพัน px เป็น "ความเร็ว" แล้วสปริงถัดไปพุ่งย้อนกลับ (เห็นเป็นกรอกลับ)
+   * jump ล้างความเร็ว → เก็บความเร็วจริงก่อนกระโดดไว้ส่งต่อ การเคลื่อนที่จึงต่อเนื่อง
+   */
   const settle = React.useCallback(() => {
     const p = posRef.current;
     if (!looping || (p >= 0 && p < count)) return p;
     const real = normalizeLoop(p, count);
-    x.stop();
-    x.set(x.get() + (p - real) * step);
+    carry.current = x.getVelocity();
+    x.jump(x.get() + (p - real) * step);
     commit(real);
     return real;
   }, [looping, count, step, x]);
@@ -89,8 +96,10 @@ export function Carousel({
     const p = looping ? Math.min(count, Math.max(-pv, target)) : clampIndex(target, count, pv);
     commit(p);
     const to = offsetOf(p);
-    if (instant || reduce) { x.set(to); settle(); return; }
-    animate(x, to, { ...SPRING, onComplete: () => { if (posRef.current === p) settle(); } });
+    const velocity = carry.current;
+    carry.current = 0;
+    if (instant || reduce) { x.jump(to); settle(); return; }
+    animate(x, to, { ...SPRING, velocity, onComplete: () => { if (posRef.current === p) settle(); } });
   }, [settle, looping, count, pv, offsetOf, reduce, x]);
 
   // ขนาดเปลี่ยน (ย่อขยายจอ/จำนวนใบต่อหน้าเปลี่ยน) → จัดตำแหน่งใหม่ทันที ไม่เล่นอนิเมชัน

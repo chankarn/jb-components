@@ -7,6 +7,7 @@ import { Check, ChevronDown, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n/client';
 import { shake } from '@/lib/motion-fx';
+import { mergeRefs, useFloating } from '@/components/Popover';
 import { filterOptions, hasExactLabel, highlightParts, moveActive, toggleValue, type ComboOption, type Matched } from '@/lib/combobox';
 
 export type { ComboOption };
@@ -74,7 +75,6 @@ export function Combobox(props: ComboboxProps) {
   const [query, setQuery] = React.useState('');
   const [active, setActive] = React.useState(-1);
   const [blocked, setBlocked] = React.useState(false);
-  const [pos, setPos] = React.useState<{ left: number; width: number; top?: number; bottom?: number; max: number } | null>(null);
 
   const current = !multi ? options.find((o) => o.value === props.value) : undefined;
   const rows: Row[] = React.useMemo(() => {
@@ -84,25 +84,13 @@ export function Combobox(props: ComboboxProps) {
   }, [options, query, onCreate]);
   const disabledFlags = React.useMemo(() => rows.map((r) => ({ disabled: r.kind === 'option' ? r.m.option.disabled : false })), [rows]);
 
-  const place = React.useCallback(() => {
-    const r = box.current?.getBoundingClientRect();
-    if (!r) return;
-    const below = window.innerHeight - r.bottom - 12;
-    const above = r.top - 12;
-    const flip = below < 220 && above > below;
-    setPos({
-      left: Math.min(r.left, Math.max(8, window.innerWidth - Math.max(r.width, 220) - 8)),
-      width: Math.max(r.width, 220),
-      max: Math.min(340, flip ? above : below),
-      ...(flip ? { bottom: window.innerHeight - r.top + 6 } : { top: r.bottom + 6 }),
-    });
-  }, []);
+  // ตำแหน่งแผง: ตัววางตำแหน่งกลาง (พลิกขึ้นเมื่อด้านล่างเหลือไม่ถึง 220px · ตามช่องตอนเลื่อนหน้า/ย่อจอ · หดความสูงพอดีจอ)
+  const { setFloating, pos, anchorWidth } = useFloating(open, box, { side: 'bottom', align: 'start', offset: 6, minSize: 220 });
 
   const show = React.useCallback(() => {
     if (disabled) return;
-    place();
     setOpen(true);
-  }, [disabled, place]);
+  }, [disabled]);
   const closeList = React.useCallback(() => { setOpen(false); setQuery(''); }, []);
 
   // รายการเปลี่ยน/เปิดแผง → active ไปที่ตัวที่เลือกอยู่ (โหมดเดี่ยว ไม่มีคำค้น) หรือตัวแรกที่เลือกได้
@@ -122,16 +110,9 @@ export function Combobox(props: ComboboxProps) {
       const el = e.target as Node;
       if (!box.current?.contains(el) && !panel.current?.contains(el)) closeList();
     };
-    const follow = () => place();
     document.addEventListener('mousedown', down);
-    window.addEventListener('scroll', follow, true);
-    window.addEventListener('resize', follow);
-    return () => {
-      document.removeEventListener('mousedown', down);
-      window.removeEventListener('scroll', follow, true);
-      window.removeEventListener('resize', follow);
-    };
-  }, [open, place, closeList]);
+    return () => document.removeEventListener('mousedown', down);
+  }, [open, closeList]);
 
   React.useEffect(() => {
     if (!blocked) return;
@@ -278,11 +259,11 @@ export function Combobox(props: ComboboxProps) {
       {typeof document !== 'undefined' &&
         createPortal(
           <AnimatePresence>
-            {open && pos && (
+            {open && (
               <motion.div data-floating
-                ref={panel}
-                initial={reduce ? false : { opacity: 0, y: pos.bottom !== undefined ? 6 : -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, transition: { duration: 0.12 } }} transition={{ duration: 0.16, ease: 'easeOut' }}
-                style={{ position: 'fixed', left: pos.left, width: pos.width, top: pos.top, bottom: pos.bottom, maxHeight: pos.max }}
+                ref={mergeRefs(panel, setFloating)}
+                initial={reduce ? false : { opacity: 0, y: pos?.side === 'top' ? 6 : -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, transition: { duration: 0.12 } }} transition={{ duration: 0.16, ease: 'easeOut' }}
+                style={{ position: 'fixed', left: pos?.left ?? 0, top: pos?.top ?? 0, width: Math.max(anchorWidth, 220), maxHeight: Math.min(340, pos?.available ?? 340), visibility: pos ? undefined : 'hidden' }}
                 className="z-[300] flex flex-col overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-lift"
               >
                 <ul ref={list} id={`${uid}-list`} role="listbox" aria-multiselectable={multi || undefined} className="min-h-0 flex-1 overflow-auto p-1.5">

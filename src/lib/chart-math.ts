@@ -52,3 +52,33 @@ export function sliceAt(dx: number, dy: number, radius: number, values: number[]
   }
   return 0; // ปัดเศษใกล้ 360° = ชิ้นแรก
 }
+
+/**
+ * เส้นแนวโน้มจิ๋ว (ในการ์ดตัวเลข): จุดข้อมูล → path ของเส้นและพื้นที่ใต้เส้น ในกล่อง w×h
+ * เว้นขอบบน/ล่าง `pad` กันเส้นโดนตัด · ค่าเท่ากันหมด → เส้นตรงกลาง · น้อยกว่า 2 จุด → ว่าง
+ */
+export function sparkPath(values: readonly number[], w: number, h: number, pad = 2): { line: string; area: string } {
+  if (values.length < 2) return { line: '', area: '' };
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min;
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * w;
+    const y = span === 0 ? h / 2 : pad + (1 - (v - min) / span) * (h - pad * 2);
+    return [Math.round(x * 100) / 100, Math.round(y * 100) / 100] as const;
+  });
+  const line = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join(' ');
+  return { line, area: `${line} L${w} ${h} L0 ${h} Z` };
+}
+
+/** ค่าระหว่างทางของตัวเลขที่วิ่ง (ease-out cubic: เร็วตอนต้น ช้าลงตอนท้าย) · t = 0..1 */
+export function countUp(from: number, to: number, t: number): number {
+  const k = Math.min(1, Math.max(0, t));
+  return from + (to - from) * (1 - (1 - k) ** 3);
+}
+
+/** % เปลี่ยนแปลงจากค่าก่อนหน้า (ปัด 1 ตำแหน่ง) · ค่าก่อนหน้าเป็น 0 → null (หารไม่ได้) */
+export function percentChange(prev: number, curr: number): number | null {
+  if (prev === 0) return null;
+  return Math.round(((curr - prev) / Math.abs(prev)) * 1000) / 10;
+}
