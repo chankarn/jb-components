@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Tabs } from '@/components/Tabs';
 import { PillSwitch } from '@/components/PillSwitch';
-import { ThemeToggle } from '@/components/ThemeProvider';
+import { ThemeToggle, useTheme } from '@/components/ThemeProvider';
+import { CommandPalette, useCommandHotkey, type CommandItem } from '@/components/CommandPalette';
+import { Kbd, useShortcutLabel } from '@/components/Kbd';
 import { HelpTip } from '@/components/HelpTip';
 import { EmptyState } from '@/components/EmptyState';
-import { ZoomImage } from '@/components/MediaLightbox';
+import { MediaGallery, ZoomImage, type MediaItem } from '@/components/MediaLightbox';
 import { Button, Card, Chip, Field, Input, Textarea, Progress, Skeleton, SkeletonText, Empty } from '@/components/ui';
 import { Select } from '@/components/Select';
 import { DatePicker } from '@/components/DatePicker';
@@ -46,7 +48,7 @@ import { Breadcrumb } from '@/components/Breadcrumb';
 import { Stepper } from '@/components/Stepper';
 import { TagInput } from '@/components/TagInput';
 import { Loader, LoadingButton, LoadingOverlay, TopProgress, type LoaderVariant, type LoadingStatus } from '@/components/Loading';
-import { AlertTriangle, CheckCircle2, Clock, Bell, Bold, ChevronDown, Copy, CreditCard, FileDown, Filter, Folder, Home, Italic, LogOut, Package, Settings, Share2, ShieldCheck, Underline, User } from 'lucide-react';
+import { ArrowUp, BarChart3, Hash, LayoutDashboard, Moon, Search, Sun, AlertTriangle, CheckCircle2, Clock, Bell, Bold, ChevronDown, Copy, CreditCard, FileDown, Filter, Folder, Home, Italic, LogOut, Package, Settings, Share2, ShieldCheck, Underline, User } from 'lucide-react';
 
 const SCALES: [string, string[]][] = [
   ['brand', ['50', '100', '200', '300', '400', '500', '600', '700']],
@@ -97,6 +99,15 @@ const CARDS = [
   { id: 1050, author: 'Joseph Barrientos', tag: 'ทะเล', title: 'โขดหินกลางทะเลสีคราม' },
   { id: 1057, author: 'Stefan Kunze', tag: 'ชายฝั่ง', title: 'เนินเขาริมทะเลยามเย็น' },
   { id: 1067, author: 'Kevin Young', tag: 'เมือง', title: 'เส้นขอบฟ้าเมืองยามพลบค่ำ' },
+];
+/** สื่อตัวอย่าง: รูปจาก Lorem Picsum (Unsplash) · คลิปวิดีโอ CC0 จาก MDN (ใช้ได้ฟรี) — แสดงจาก URL ไม่ได้เก็บในโปรเจกต์ */
+const MEDIA: MediaItem[] = [
+  { src: pic(1015, 1600, 1067), title: 'ฟยอร์ดมองจากหน้าผา', credit: 'ภาพ: Alexey Topolyanskiy · Unsplash' },
+  { src: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4', type: 'video/mp4', title: 'ผึ้งตอมดอกไม้ (วิดีโอ)', credit: 'คลิป CC0 · MDN Web Docs' },
+  { src: pic(1039, 1600, 1067), title: 'น้ำตกกลางป่าดิบชื้น', credit: 'ภาพ: Andrew Coelho · Unsplash' },
+  { src: pic(1043, 1600, 1067), title: 'หน้าผาหินแกรนิตกับป่าสน', credit: 'ภาพ: Christian Joudrey · Unsplash' },
+  { src: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4', type: 'video/mp4', title: 'ชายใส่หมวกบนรถไฟ (วิดีโอ)', credit: 'คลิป CC0 · MDN Web Docs' },
+  { src: pic(1016, 1600, 1067), title: 'หุบผาหินแดงยามเย็น', credit: 'ภาพ: Philippe Wuyts · Unsplash' },
 ];
 const MARQUEE_PICS = [106, 110, 128, 164, 177, 184, 188, 200];
 const LOGOS: [string, typeof Leaf][] = [['Aurora', Sparkles], ['Lumen', Aperture], ['Nimbus', Feather], ['Pine & Co', Leaf], ['Orbit', Orbit], ['Kinetic', Atom], ['Halo', Hexagon], ['Vertex', Gem]];
@@ -152,13 +163,10 @@ const fakeUpload: UploadFn = (file, { onProgress, signal }) =>
     signal.addEventListener('abort', () => { clearInterval(id); reject(new DOMException('aborted', 'AbortError')); });
   });
 
-const IMG = "data:image/svg+xml;utf8," + encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><rect width="640" height="360" fill="#FFE0E0"/><circle cx="320" cy="180" r="90" fill="#D60000"/></svg>',
-);
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-card bg-surface p-5 shadow-card">
+    <section className="scroll-mt-4 rounded-card bg-surface p-5 shadow-card">
       <h2 className="mb-4 text-lg font-semibold">{title}</h2>
       {children}
     </section>
@@ -226,7 +234,29 @@ export function Gallery() {
   const [form, setForm] = useState<{ name: string; email: string; qty: number | null; dept: string | null; agree: boolean }>({ name: '', email: '', qty: null, dept: null, agree: false });
   const [formErr, setFormErr] = useState<Record<string, string>>({});
   const [formSt, setFormSt] = useState<LoadingStatus>('idle');
+  const [localMedia, setLocalMedia] = useState<MediaItem[]>([]);
+  // คืนหน่วยความจำของไฟล์จากเครื่องตอนออกจากหน้า
+  useEffect(() => () => localMedia.forEach((m) => URL.revokeObjectURL(m.src)), []); // eslint-disable-line react-hooks/exhaustive-deps
   const [dlg, setDlg] = useState(false);
+  const [cmd, setCmd] = useState(false);
+  const [cmdSections, setCmdSections] = useState<string[]>([]);
+  const cmdKey = useShortcutLabel('mod+K');
+  const { choice, setChoice } = useTheme();
+  useCommandHotkey(() => setCmd((o) => !o));
+  // เปิด ⌘K → อ่านหัวข้อทั้งหมดในหน้า (เพิ่มหัวข้อใหม่แล้วค้นเจอเอง ไม่ต้องแก้รายการ)
+  useEffect(() => { if (cmd) setCmdSections([...document.querySelectorAll('[data-gallery] > section > h2')].map((h) => h.textContent ?? '').filter(Boolean)); }, [cmd]);
+  const cmdItems: CommandItem[] = [
+    ...cmdSections.map((t) => ({
+      id: `sec:${t}`, group: 'หัวข้อใน Gallery', label: t, icon: <Hash size={16} />,
+      onSelect: () => [...document.querySelectorAll('[data-gallery] > section > h2')].find((h) => h.textContent === t)?.parentElement?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+    })),
+    { id: 'go:dash', group: 'ไปหน้าอื่น', label: 'Dashboard', icon: <BarChart3 size={16} />, keywords: ['charts', 'กราฟ'], onSelect: () => { window.location.href = '/dashboard'; } },
+    { id: 'go:demo', group: 'ไปหน้าอื่น', label: 'ตัวอย่างแอป (login → หลังบ้าน)', icon: <LayoutDashboard size={16} />, keywords: ['demo', 'app', 'shell'], onSelect: () => { window.location.href = '/demo/login'; } },
+    { id: 'act:theme', group: 'การทำงาน', label: choice === 'dark' ? 'เปลี่ยนเป็นธีมสว่าง' : 'เปลี่ยนเป็นธีมมืด', icon: choice === 'dark' ? <Sun size={16} /> : <Moon size={16} />, keywords: ['theme', 'dark', 'light'], onSelect: () => setChoice(choice === 'dark' ? 'light' : 'dark') },
+    { id: 'act:toast', group: 'การทำงาน', label: 'แสดง toast ตัวอย่าง', icon: <Bell size={16} />, keywords: ['notification'], onSelect: () => toast.success('สั่งงานจาก Command Palette สำเร็จ') },
+    { id: 'act:dialog', group: 'การทำงาน', label: 'เปิด Dialog เพิ่มสมาชิก', icon: <User size={16} />, keywords: ['modal'], onSelect: () => setDlg(true) },
+    { id: 'act:top', group: 'การทำงาน', label: 'เลื่อนขึ้นบนสุด', icon: <ArrowUp size={16} />, keywords: ['top'], onSelect: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
+  ];
   const [drw, setDrw] = useState<'right' | 'left' | 'bottom' | null>(null);
   const [dlgLock, setDlgLock] = useState(false);
   const [role, setRole] = useState<string | null>('editor');
@@ -234,11 +264,13 @@ export function Gallery() {
   const rows = Array.from({ length: 25 }, (_, i) => ({ id: i + 1, name: `คอร์ส ${i + 1}`, st: ['published', 'draft', 'archived'][i % 3], n: (i + 1) * 7 }))
     .filter((r) => r.name.includes(q) && (!status || r.st === status));
   return (
-    <div {...(admin ? { 'data-surface': 'admin' } : {})} className="mx-auto max-w-4xl space-y-5 p-6">
+    <div {...(admin ? { 'data-surface': 'admin' } : {})} data-gallery className="mx-auto max-w-4xl space-y-5 p-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <h1 className="text-2xl font-semibold">jb-components</h1>
           <Link href="/dashboard" className="rounded-pill bg-brand-100 px-3 py-1 text-xs font-bold text-brand-link transition hover:bg-brand-200">Dashboard →</Link>
+          <Link href="/demo/login" className="rounded-pill bg-brand-600 px-3 py-1 text-xs font-bold text-white transition hover:bg-brand-700">ตัวอย่างแอป (login → หลังบ้าน) →</Link>
+          <Link href="/landing" className="rounded-pill bg-ink px-3 py-1 text-xs font-bold text-paper transition hover:opacity-90">ตัวอย่างหน้าบ้าน (landing) →</Link>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-ink-soft">
@@ -529,12 +561,27 @@ export function Gallery() {
         </div>
       </Section>
 
+      <Section title="CommandPalette (⌘K / Ctrl+K)">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button" onClick={() => setCmd(true)}
+            className="flex h-10 w-72 max-w-full items-center gap-2.5 rounded-pill border border-ink/10 bg-surface pl-3.5 pr-1.5 text-sm text-ink-mute transition hover:border-ink/20 hover:text-ink-soft"
+          >
+            <Search size={15} /><span className="flex-1 text-left">ค้นหาหัวข้อหรือคำสั่ง…</span>
+            <Kbd keys="mod+K" />
+          </button>
+          <span className="text-xs text-ink-mute">หรือกด {cmdKey} ที่ไหนก็ได้ในหน้านี้ (Mac ใช้ ⌘ · Windows ใช้ Ctrl) · ลองพิมพ์ "slider", "ธีม", "dialog"</span>
+        </div>
+        <p className="mt-3 text-xs text-ink-mute">AppShell (sidebar + topbar) ดูได้ใน <Link href="/demo/login" className="font-semibold text-brand-link hover:underline">ตัวอย่างแอป</Link> — ที่นั่นปุ่มลัดเดียวกันค้นเมนู คำสั่ง และสินค้าได้</p>
+        <CommandPalette open={cmd} onOpenChange={setCmd} items={cmdItems} placeholder="ค้นหาหัวข้อใน Gallery หรือคำสั่ง…" />
+      </Section>
+
       <Section title="Tooltip / Popover / DropdownMenu">
         <div className="space-y-5">
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-0.5 rounded-xl border border-ink/10 p-1">
-              {([['b', 'ตัวหนา', '⌘B', Bold], ['i', 'ตัวเอียง', '⌘I', Italic], ['u', 'ขีดเส้นใต้', '⌘U', Underline]] as const).map(([k, name, key, Icon]) => (
-                <Tooltip key={k} content={<span className="flex items-center gap-2">{name}<kbd className="font-sans opacity-60">{key}</kbd></span>}>
+              {([['b', 'ตัวหนา', 'mod+B', Bold], ['i', 'ตัวเอียง', 'mod+I', Italic], ['u', 'ขีดเส้นใต้', 'mod+U', Underline]] as const).map(([k, name, key, Icon]) => (
+                <Tooltip key={k} content={<span className="flex items-center gap-2">{name}<Kbd keys={key} variant="text" className="opacity-60" /></span>}>
                   <button
                     type="button" aria-label={name} aria-pressed={fmt[k]} onClick={() => setFmt((f) => ({ ...f, [k]: !f[k] }))}
                     className={`grid size-8 place-items-center rounded-lg transition ${fmt[k] ? 'bg-brand-100 text-brand-link' : 'text-ink-mute hover:bg-ink/[0.06] hover:text-ink'}`}
@@ -583,12 +630,12 @@ export function Gallery() {
             <DropdownMenu
               trigger={<Button variant="outline" size="sm">การทำงาน <ChevronDown size={14} /></Button>}
               items={[
-                { label: 'แก้ไข', icon: <Pencil size={15} />, shortcut: '⌘E', onSelect: () => setLastAction('แก้ไข') },
-                { label: 'ทำสำเนา', icon: <Copy size={15} />, shortcut: '⌘D', onSelect: () => setLastAction('ทำสำเนา') },
+                { label: 'แก้ไข', icon: <Pencil size={15} />, shortcut: 'mod+E', onSelect: () => setLastAction('แก้ไข') },
+                { label: 'ทำสำเนา', icon: <Copy size={15} />, shortcut: 'mod+D', onSelect: () => setLastAction('ทำสำเนา') },
                 { label: 'แชร์', icon: <Share2 size={15} />, description: 'ส่งลิงก์ให้คนในทีม', onSelect: () => setLastAction('แชร์') },
                 { label: 'ส่งออก PDF (ปิด)', icon: <FileDown size={15} />, disabled: true },
                 { type: 'separator' },
-                { label: 'ลบ', icon: <Trash2 size={15} />, danger: true, shortcut: '⌫', onSelect: () => setLastAction('ลบ') },
+                { label: 'ลบ', icon: <Trash2 size={15} />, danger: true, shortcut: 'del', onSelect: () => setLastAction('ลบ') },
               ]}
             />
             <DropdownMenu
@@ -608,7 +655,7 @@ export function Gallery() {
                 { type: 'label', label: 'somchai@example.com' },
                 { label: 'โปรไฟล์', icon: <User size={15} />, href: '/' },
                 { label: 'การแจ้งเตือน', icon: <Bell size={15} />, onSelect: () => setLastAction('การแจ้งเตือน') },
-                { label: 'ตั้งค่า', icon: <Settings size={15} />, shortcut: '⌘,', onSelect: () => setLastAction('ตั้งค่า') },
+                { label: 'ตั้งค่า', icon: <Settings size={15} />, shortcut: 'mod+,', onSelect: () => setLastAction('ตั้งค่า') },
                 { type: 'separator' },
                 { label: 'ออกจากระบบ', icon: <LogOut size={15} />, onSelect: () => setLastAction('ออกจากระบบ') },
               ]}
@@ -1036,8 +1083,37 @@ export function Gallery() {
         <EmptyState title="ยังไม่มีข้อมูล" description="เริ่มต้นด้วยการเพิ่มรายการแรก" />
       </Section>
 
-      <Section title="MediaLightbox (ZoomImage)">
-        <ZoomImage src={IMG} alt="ตัวอย่างภาพ" className="w-64" imgClassName="w-full rounded-card" />
+      <Section title="MediaLightbox · MediaGallery (รูป + วิดีโอ)">
+        <div className="space-y-5">
+          <MediaGallery items={MEDIA} columns={3} />
+          <p className="text-xs text-ink-mute">กดภาพย่อเพื่อดูเต็มจอ · ← → หรือปัดเพื่อเลื่อน · คลิกรูปเพื่อซูมแล้วลากดู · Esc ออกจากซูม/ปิด · วิดีโอแสดงเฟรมแรก ความยาว และเล่นในหน้าต่างเดียวกัน</p>
+
+          <div className="rounded-2xl border border-dashed border-ink/15 p-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-pill bg-brand-600 px-4 text-xs font-semibold text-white transition hover:bg-brand-700 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500/50">
+                <Plus size={14} /> ลองไฟล์จากเครื่อง (รูป/คลิป)
+                <input
+                  type="file" accept="image/*,video/*" multiple className="sr-only"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    setLocalMedia((cur) => [...cur, ...files.map((f) => ({ src: URL.createObjectURL(f), type: f.type, title: f.name }))]);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+              {localMedia.length > 0 && (
+                <Button size="sm" variant="ghost" onClick={() => { localMedia.forEach((m) => URL.revokeObjectURL(m.src)); setLocalMedia([]); }}>ล้าง</Button>
+              )}
+              <span className="text-xs text-ink-mute">ไฟล์ไม่ได้อัปโหลดไปไหน — เปิดจากเครื่องด้วย URL.createObjectURL แบบเดียวกับตอนแสดงตัวอย่างก่อนอัปโหลด</span>
+            </div>
+            {localMedia.length > 0 && <MediaGallery className="mt-4" items={localMedia} columns={4} aspect="aspect-square" />}
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-semibold text-ink-soft">ZoomImage (รูปเดี่ยว · ใช้ใน ImagePicker)</p>
+            <ZoomImage src={pic(1044, 1600, 1067)} alt="แม่น้ำในสายหมอก" className="w-64 max-w-full" imgClassName="aspect-[3/2] w-full rounded-card object-cover" />
+          </div>
+        </div>
       </Section>
     </div>
   );

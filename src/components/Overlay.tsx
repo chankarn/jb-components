@@ -29,7 +29,7 @@ function useNarrow() {
   );
 }
 
-function useModal(open: boolean, onClose: () => void, panel: React.RefObject<HTMLElement | null>, dismissible: boolean, focusField = true) {
+export function useModal(open: boolean, onClose: () => void, panel: React.RefObject<HTMLElement | null>, dismissible: boolean, focusField = true) {
   const close = React.useRef(onClose);
   close.current = onClose;
   const canDismiss = React.useRef(dismissible);

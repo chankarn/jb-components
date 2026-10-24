@@ -120,6 +120,8 @@ export function Toolbar({
 }) {
   const t = useT();
   const [text, setText] = useState(q);
+  // q เปลี่ยนจากภายนอก (ล้างตัวกรอง · ย้อนกลับ · ค้นจาก topbar) → ช่องค้นหาตาม ไม่งั้น debounce ด้านล่างจะเขียนค่าเก่ากลับ
+  useEffect(() => { setText(q); }, [q]);
 
   // debounce ไม่ให้ยิง API ทุกตัวอักษร
   useEffect(() => {

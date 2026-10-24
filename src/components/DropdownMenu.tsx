@@ -6,13 +6,15 @@ import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { firstEnabled, lastEnabled, nextEnabled, typeahead } from '@/lib/menu';
 import { Floating, mergeRefs, useDismiss, useFloating, type Align, type Side } from '@/components/Popover';
+import { useIsMac } from '@/components/Kbd';
+import { formatShortcut } from '@/lib/platform';
 
 export type MenuEntry =
   | {
       type?: 'item';
       label: string;
       icon?: React.ReactNode;
-      /** ข้อความปุ่มลัดชิดขวา เช่น "⌘D" (แสดงอย่างเดียว ไม่ได้ผูกคีย์ให้) */
+      /** ปุ่มลัดชิดขวา เขียนแบบ 'mod+D' แล้วแสดงตามระบบ (⌘D บน Mac · Ctrl+D บน Windows) — แสดงอย่างเดียว ไม่ได้ผูกคีย์ให้ */
       shortcut?: string;
       description?: string;
       onSelect?: () => void;
@@ -46,6 +48,7 @@ export function DropdownMenu({
 }) {
   const [open, setOpen] = React.useState(false);
   const [active, setActive] = React.useState(-1);
+  const mac = useIsMac();
   const id = React.useId();
   const anchor = React.useRef<HTMLElement | null>(null);
   const menu = React.useRef<HTMLDivElement | null>(null);
@@ -166,7 +169,7 @@ export function DropdownMenu({
                 <span className="block truncate">{item.label}</span>
                 {item.description && <span className="block truncate text-xs text-ink-mute">{item.description}</span>}
               </span>
-              {item.shortcut && <kbd className="ml-3 shrink-0 font-sans text-xs tracking-wider text-ink-mute">{item.shortcut}</kbd>}
+              {item.shortcut && <kbd className="ml-3 shrink-0 font-sans text-xs tracking-wider text-ink-mute">{formatShortcut(item.shortcut, mac)}</kbd>}
             </>
           );
           if (item.href && !item.disabled) {

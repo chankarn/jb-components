@@ -43,7 +43,7 @@ export function Chip({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-pill px-2.5 py-0.5 text-[11px] font-semibold',
+        'inline-flex items-center whitespace-nowrap rounded-pill px-2.5 py-0.5 text-[11px] font-semibold',
         {
           brand: 'bg-brand-100 text-brand-link',
           dark: 'bg-ink text-paper',
