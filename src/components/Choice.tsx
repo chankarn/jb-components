@@ -30,6 +30,8 @@ function Text({ label, description, size }: { label?: React.ReactNode; descripti
 }
 
 // input จริง: โปร่งใสทับเต็มพื้นที่หน้าตา (คลิกตรงไหนก็โดน · โฟกัสได้ · ตำแหน่ง screen reader ตรงกับที่เห็น)
+// input จริงคลุมทั้งกล่อง (โปร่งใส) · ชั้นตกแต่งที่วาดทับต้องเป็น pointer-events-none เสมอ
+// ไม่งั้นชั้นที่มี transform (จุด radio สเกล · กล่องยุบตอนกด) จะขึ้นมาอยู่เหนือ input และรับคลิกแทน
 const NATIVE = 'peer absolute inset-0 m-0 size-full cursor-[inherit] appearance-none opacity-0';
 const FOCUS = 'peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500/50 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-surface';
 
@@ -60,7 +62,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(functi
         <span
           aria-hidden
           className={cn(
-            'cb-box grid size-full place-items-center border-2 border-ink/25 bg-surface text-white transition-[background-color,border-color,transform] duration-200',
+            'cb-box pointer-events-none grid size-full place-items-center border-2 border-ink/25 bg-surface text-white transition-[background-color,border-color,transform] duration-200',
             'peer-hover:border-brand-500 peer-active:scale-90',
             'peer-checked:border-brand-600 peer-checked:bg-brand-600 peer-indeterminate:border-brand-600 peer-indeterminate:bg-brand-600',
             FOCUS, box,
@@ -90,7 +92,7 @@ const RadioMark = React.forwardRef<HTMLInputElement, Omit<RadioProps, 'label' | 
       <span
         aria-hidden
         className={cn(
-          'radio-dot grid size-full place-items-center rounded-full border-2 border-ink/25 bg-surface transition-[border-color,transform] duration-200',
+          'radio-dot pointer-events-none grid size-full place-items-center rounded-full border-2 border-ink/25 bg-surface transition-[border-color,transform] duration-200',
           'peer-hover:border-brand-500 peer-active:scale-90 peer-checked:border-brand-600',
           FOCUS,
         )}
@@ -208,7 +210,7 @@ export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(function S
         <span
           aria-hidden
           className={cn(
-            'switch-track block size-full rounded-pill bg-ink/20 transition-colors duration-200 peer-hover:bg-ink/30 peer-checked:bg-brand-600 peer-checked:peer-hover:bg-brand-700',
+            'switch-track pointer-events-none block size-full rounded-pill bg-ink/20 transition-colors duration-200 peer-hover:bg-ink/30 peer-checked:bg-brand-600 peer-checked:peer-hover:bg-brand-700',
             FOCUS,
           )}
         />

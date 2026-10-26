@@ -91,9 +91,12 @@ export function DatePicker({ value, onChange, min, max, withTime, clearable, dis
   }, [open]);
 
   // ย้ายโฟกัสไปวันที่ cursor ชี้ (roving tabindex)
+  // รอให้วัดตำแหน่งเสร็จก่อน: เฟรมแรกปฏิทินยัง visibility:hidden → focus() ไม่ติด โฟกัสค้างที่ปุ่มนอกปฏิทิน
+  // (ลูกศรไม่ทำงาน · Esc ลามไปปิด dialog ที่ครอบ) · ขึ้นกับ "มีตำแหน่งแล้ว" ไม่ใช่ pos ทั้งก้อน — เลื่อนหน้าแล้วไม่ดึงโฟกัสกลับ
+  const placed = pos != null;
   React.useEffect(() => {
-    if (open && mode === 'days') panel.current?.querySelector<HTMLElement>(`[data-ymd="${toYmd(cursor)}"]`)?.focus({ preventScroll: true });
-  }, [open, mode, cursor, view.y, view.m]);
+    if (open && placed && mode === 'days') panel.current?.querySelector<HTMLElement>(`[data-ymd="${toYmd(cursor)}"]`)?.focus({ preventScroll: true });
+  }, [open, placed, mode, cursor, view.y, view.m]);
 
   function pick(c: YMD) {
     if (outOfRange(c, minY, maxY)) return;
@@ -153,6 +156,8 @@ export function DatePicker({ value, onChange, min, max, withTime, clearable, dis
           ref={trigger} id={id} type="button" disabled={disabled}
           aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? uid : undefined} aria-label={rest['aria-label']}
           onClick={() => (open ? close(false) : show())}
+          // กันพลาด: โฟกัสยังอยู่ที่ปุ่มตอนปฏิทินเปิด → Esc ปิดแค่ปฏิทิน ไม่ลามไปปิด dialog/drawer ที่ครอบ
+          onKeyDown={(e) => { if (open && e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); close(); } }}
           className={cn(
             'flex w-full min-w-0 items-center justify-between gap-2 border border-ink/15 bg-surface text-left outline-none transition',
             'hover:border-ink/30 focus-visible:border-brand-500 focus-visible:shadow-glow',

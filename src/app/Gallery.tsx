@@ -260,6 +260,7 @@ export function Gallery() {
   const [drw, setDrw] = useState<'right' | 'left' | 'bottom' | null>(null);
   const [dlgLock, setDlgLock] = useState(false);
   const [role, setRole] = useState<string | null>('editor');
+  const [startDate, setStartDate] = useState('');
   const [teams, setTeams] = useState<string[]>(['ฝ่ายผลิต']);
   const rows = Array.from({ length: 25 }, (_, i) => ({ id: i + 1, name: `คอร์ส ${i + 1}`, st: ['published', 'draft', 'archived'][i % 3], n: (i + 1) * 7 }))
     .filter((r) => r.name.includes(q) && (!status || r.st === status));
@@ -922,6 +923,8 @@ export function Gallery() {
             />
           </Field>
           <Field label="ทีม" as="div"><TagInput aria-label="ทีม" variant="colorful" value={teams} onChange={setTeams} placeholder="พิมพ์ชื่อทีม" /></Field>
+          {/* ปฏิทินใน dialog: เปิดแล้วโฟกัสต้องอยู่ที่วันที่ (ลูกศรเลื่อนได้) และ Esc ปิดแค่ปฏิทิน ไม่ปิด dialog */}
+          <Field label="วันเริ่มงาน" as="div"><DatePicker value={startDate} onChange={setStartDate} clearable /></Field>
         </Dialog>
 
         <Dialog
