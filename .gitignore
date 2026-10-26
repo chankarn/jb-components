@@ -4,3 +4,7 @@ node_modules
 next-env.d.ts
 .DS_Store
 .env*
+
+# ตรวจตัวอย่างในคู่มือ (ชั่วคราว)
+.doc-check/
+tsconfig.doc-check.json

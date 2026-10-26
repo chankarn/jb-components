@@ -8,6 +8,8 @@ npm run dev     # http://localhost:3400 (หน้า Gallery)
 npm run build
 ```
 
+> **ใช้คลังนี้ทำเว็บ (ให้ AI อ่าน):** เริ่มที่ [AGENTS.md](AGENTS.md) → [docs/guide](docs/guide/01-workflow.md) (requirement → คอมโพเนนต์ → สูตรหน้า → กฎ → checklist) · props ทุกตัว [docs/api](docs/api/README.md)
+
 ## สถานะการย้าย
 
 | กลุ่ม | คอมโพเนนต์ | สถานะ |
