@@ -124,10 +124,33 @@ export function NewsTicker({ items }: { items: string[] }) {
 - ความเร็วเป็น px/วินาที (เนื้อหายาวขึ้นไม่เร็วขึ้น) · `direction` left/right/up/down (แนวตั้งต้องกำหนดความสูงใน `className`)
 - โลโก้ลูกค้าบน landing ใช้บล็อก `LogoCloud` · รีวิววนใช้ `Testimonials`
 
-## BlobArt (ภาพประกอบนามธรรม)
+## BlobArt (ภาพประกอบนามธรรม · พื้นหลัง login / แถบหัวหน้า)
 
-| ตัว | ใช้ |
-|---|---|
-| `LoginBackdrop` | พื้นหลังหน้า login (วางเป็นลูกตัวแรกของกล่อง `relative overflow-hidden`) |
-| `AdminLoginBackdrop`, `LoginPattern`, `HeroPattern` | พื้นหลังลวดลายแบบอื่น |
-| `BlobArt`, `FlatCluster` | กลุ่ม blob ตกแต่ง (สีผ่านคลาส `fill-brand-*`) |
+ทุกตัวมี `variant`: **`'3d'`** (ค่าตั้งต้น — blob/ทรงกลม/วงแหวนมีแสงเงา ลอยพร้อมเงา ประกายระยิบ ฟองลอยขึ้น) หรือ **`'2d'`** (รูปทรงแบนสีเรียบ + ลายเส้น)
+เคลื่อนไหวเองทั้งสองแบบ: ลอยขึ้นลง · blob เปลี่ยนรูปทรง · ขยับตามเมาส์ (`interactive={false}` ปิด) · ผู้ใช้ตั้งลดการเคลื่อนไหว = นิ่ง
+
+| ตัว | ใช้ | วาง |
+|---|---|---|
+| `LoginBackdrop variant?` | พื้นหลังหน้า login ฝั่งผู้ใช้ (blob ออร์แกนิก) | ลูกตัวแรกของกล่อง `relative overflow-hidden` · กลางกล่องเว้นไว้ให้การ์ด |
+| `AdminLoginBackdrop variant?` | พื้นหลังหน้า login หลังบ้าน (เรขาคณิต + เครือข่ายจุดมีสัญญาณวิ่ง) | เหมือนข้างบน |
+| `LoginPattern` | ลายเส้นอย่างเดียว (คอนทัวร์ + สัญลักษณ์เล็ก) ซ้อนบนพื้นอะไรก็ได้ | กล่อง `relative` · `LoginBackdrop variant="2d"` มีลายนี้อยู่แล้ว |
+| `HeroPattern h top variant?` | แถบหัวหน้า (กว้างเตี้ย) ของเด่นอยู่ขวา ซ้ายเว้นให้ข้อความ | กล่อง `relative overflow-hidden` · ข้อความใส่ `relative` ให้อยู่บน |
+| `BlobArt variant? className` | ภาพประกอบเดี่ยว (หน้าว่าง ข้างหัวข้อ) | กำหนดขนาดด้วย `className="w-56"` |
+| `FlatCluster color` | กลุ่ม blob แบน วางเองแบบ absolute | |
+
+```tsx
+import { LoginBackdrop } from '@/components/BlobArt';
+
+export function LoginShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative grid min-h-dvh place-items-center overflow-hidden px-4">
+      <LoginBackdrop variant="3d" />
+      <div className="relative w-full max-w-sm">{children}</div>
+    </div>
+  );
+}
+```
+
+- ขนาดชิ้นที่มุมคิดจากด้านที่สั้นกว่าของกล่อง (CSS container query `cqmin`) — เต็มจอ การ์ดเล็ก หรือมือถือแนวตั้ง มุมยังอยู่ที่มุม
+- สีมาจาก brand / accent / accent2 ของ CI · โหมดมืดปรับความเข้มให้เอง (2D จางกว่า 3D)
+- เป็น client component (มีอนิเมชันและติดตามเมาส์)

@@ -107,7 +107,10 @@ body:has([data-surface='admin']) {
 :root {
   --login-bg: var(--surface);
   --blob-opacity: 1;
+  --blob-3d-opacity: 1;
 }
+/* BlobArt 3D มีแสงเงาในตัว — โหมดมืดจางน้อยกว่าแบบแบน (จางมากแล้วดูเป็นแก้วขุ่น) */
+[data-art='3d'] { --blob-opacity: var(--blob-3d-opacity); }
 
 /*
  * Dark mode — ค่าตาม docs/program/DESIGN_SYSTEM.md · ThemeProvider ตั้ง data-theme="dark|light" บน <html>
@@ -117,6 +120,7 @@ body:has([data-surface='admin']) {
   color-scheme: dark;
   --login-bg: var(--paper);
   --blob-opacity: 0.5;
+  --blob-3d-opacity: 0.9;
   --paper: 20 18 31;
   --surface: 30 27 46;
   --ink: 242 241 247;
@@ -482,6 +486,48 @@ video.no-skip::-webkit-media-controls-seek-forward-button { display: none !impor
 .aurora > span:nth-child(3) { width: 34vw; height: 34vw; max-width: 460px; max-height: 460px; left: 30%; bottom: -30%; background: rgb(var(--chart-2)); opacity: .3; animation-duration: 26s; animation-delay: -12s; }
 :root[data-theme='dark'] .aurora > span { opacity: .28; }
 @keyframes aurora-drift { 0% { transform: translate3d(0, 0, 0) scale(1); } 50% { transform: translate3d(6%, 8%, 0) scale(1.12); } 100% { transform: translate3d(-5%, 3%, 0) scale(.94); } }
+
+/* BlobArt (bf-*): ลอย · เงาหด · หมุน · ระยิบ · ฟองลอยขึ้น · เส้นโยก/ไหล · สัญญาณวิ่ง · parallax ตามเมาส์
+   ตัวแปรต่อชิ้น: --amp ระยะลอย · --dur · --delay · --tilt องศาเอียง · --d ความลึก parallax (ตั้งจาก BlobArt.tsx) */
+.bf-float, .bf-shadow, .bf-spin, .bf-spin-rev, .bf-twinkle, .bf-beat { transform-box: fill-box; transform-origin: center; }
+.bf-pulse-line { stroke-dasharray: 12 88; stroke-dashoffset: 112; }
+@media (prefers-reduced-motion: no-preference) {
+  .bf-float { animation: bf-float var(--dur, 9s) ease-in-out var(--delay, 0s) infinite alternate; }
+  .bf-shadow { animation: bf-shadow var(--dur, 9s) ease-in-out var(--delay, 0s) infinite alternate; }
+  .bf-spin { animation: bf-spin 60s linear infinite; }
+  .bf-spin-rev { animation: bf-spin 90s linear infinite reverse; }
+  .bf-twinkle { animation: bf-twinkle 3.6s ease-in-out var(--delay, 0s) infinite; }
+  .bf-rise { animation: bf-rise var(--dur, 16s) linear var(--delay, 0s) infinite; opacity: 0; }
+  .bf-sway { animation: bf-sway 14s ease-in-out var(--delay, 0s) infinite alternate; }
+  .bf-dash { animation: bf-dash 2.4s linear infinite; }
+  .bf-pulse-line { animation: bf-pulse-line 4s ease-in-out var(--delay, 0s) infinite; }
+  .bf-beat { animation: bf-beat 2.6s ease-in-out var(--delay, 0s) infinite alternate; }
+  .bf-par { translate: calc(var(--px, 0) * var(--d, 0) * 1px) calc(var(--py, 0) * var(--d, 0) * 1px); transition: translate 1s cubic-bezier(.2, .7, .2, 1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bf-rise, .bf-pulse-line { display: none; }
+}
+@keyframes bf-float {
+  from { transform: translateY(calc(var(--amp, 10px) * .5)) rotate(calc(var(--tilt, 3deg) * -.5)); }
+  to { transform: translateY(calc(var(--amp, 10px) * -.5)) rotate(calc(var(--tilt, 3deg) * .5)); }
+}
+@keyframes bf-shadow { from { transform: scaleX(1); opacity: .2; } to { transform: scaleX(.72); opacity: .09; } }
+@keyframes bf-spin { to { transform: rotate(360deg); } }
+@keyframes bf-twinkle {
+  0%, 100% { transform: scale(.2) rotate(0deg); opacity: 0; }
+  50% { transform: scale(1) rotate(90deg); opacity: 1; }
+}
+@keyframes bf-rise {
+  0% { transform: translate3d(0, 0, 0) scale(.6); opacity: 0; }
+  12% { opacity: .9; }
+  50% { transform: translate3d(14px, -38cqh, 0) scale(1); }
+  85% { opacity: .7; }
+  100% { transform: translate3d(-10px, -80cqh, 0) scale(.8); opacity: 0; }
+}
+@keyframes bf-sway { from { transform: translateX(0); } to { transform: translateX(-36px); } }
+@keyframes bf-dash { to { stroke-dashoffset: -44; } }
+@keyframes bf-pulse-line { 0% { stroke-dashoffset: 112; opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes bf-beat { from { transform: scale(.75); opacity: .5; } to { transform: scale(1.35); opacity: 1; } }
 
 /* ตารางเส้นบางจางลงรอบขอบ */
 .grid-fade {

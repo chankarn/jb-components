@@ -155,14 +155,18 @@ Marquee: แถบเลื่อนวนไม่รู้จบ (โลโก
 ## `@/components/BlobArt`
 
 ```ts
-import { BlobArt, FlatCluster, LoginBackdrop, LoginPattern, AdminLoginBackdrop, HeroPattern, BLOB_PALETTE } from '@/components/BlobArt';
+import { BlobArt, FlatCluster, LoginBackdrop, LoginPattern, AdminLoginBackdrop, HeroPattern, ArtVariant, BLOB_PALETTE } from '@/components/BlobArt';
 ```
 
 ### `BlobArt`
 
+ภาพประกอบ blob เดี่ยว (ในการ์ด/หน้าว่าง/ข้างหัวข้อ) — กำหนดขนาดด้วย className เช่น `w-64`
+`variant="2d"` สีเรียบ (เปลี่ยนสีชั้นด้วยคลาส fill ของ Tailwind: `back` `front` `dots`) · `"3d"` มีแสงเงาและลอย
+
 
 | prop | ชนิด | ค่าตั้งต้น | คำอธิบาย |
 |---|---|---|---|
+| `variant` | `"3d" \| "2d"` | `'3d'` |  |
 | `back` | `string` | `'fill-brand-300'` |  |
 | `front` | `string` | `'fill-brand-600'` |  |
 | `dots` | `string` | `'fill-brand-600'` |  |
@@ -170,29 +174,35 @@ import { BlobArt, FlatCluster, LoginBackdrop, LoginPattern, AdminLoginBackdrop, 
 
 ### `FlatCluster`
 
-กลุ่ม blob สีเดียว (flat): ชั้นหลังเป็นสีเดียวกันแบบอ่อน ชั้นหน้าเป็นสีเต็ม + วงกลมเล็กสีเดียวกัน
-ไม่ผสมสีข้ามกลุ่ม ไม่ไล่เฉด — ตามสไตล์ abstract banner
+กลุ่ม blob สีเดียวแบบแบน (2D) — วางเองแบบ absolute · `color` = สีของกลุ่ม
+ชั้นหลังสีเดียวกันแบบอ่อน ชั้นหน้าสีเต็ม + วงกลมเล็ก · ค่อยๆ เปลี่ยนรูปทรงและลอย
 
 
 | prop | ชนิด | ค่าตั้งต้น | คำอธิบาย |
 |---|---|---|---|
 | `color` **(จำเป็น)** | `string` |  |  |
 | `className` | `string` |  |  |
-| `front` | `"round" \| "wave" \| "long"` | `'wave'` |  |
-| `back` | `"round" \| "wave" \| "long"` | `'round'` |  |
+| `front` | `"a" \| "b" \| "d" \| "c"` | `'a'` |  |
+| `back` | `"a" \| "b" \| "d" \| "c"` | `'b'` |  |
 | `rotate` | `number` | `0` |  |
 | `flip` | `boolean` | `false` |  |
 
 ### `LoginBackdrop`
 
-พื้นหลังหน้า login ผู้เรียน: พื้นขาวลายจุดแบบ Demo + กลุ่ม blob สีเดียวต่อกลุ่ม
-แดง (สีหลัก) ใหญ่สุดสองมุม · อำพัน/มิ้นต์จากพาเลตเป็นกลุ่มเล็กเสริม (จอใหญ่)
+พื้นหลังหน้า login — วางเป็นลูกตัวแรกของกล่อง `relative overflow-hidden` (กลางกล่องเว้นไว้ให้การ์ด)
+`variant="3d"` blob/ทรงกลม/วงแหวนมีแสงเงา ลอยพร้อมเงา + ประกาย + จุดลอยขึ้น · `"2d"` รูปทรงแบน + ลายเส้น (แบบเดิม)
+`interactive` = ขยับตามเมาส์ (ค่าตั้งต้น true)
 
-```ts
-LoginBackdrop() => Element
-```
+
+| prop | ชนิด | ค่าตั้งต้น | คำอธิบาย |
+|---|---|---|---|
+| `variant` | `"3d" \| "2d"` | `'3d'` |  |
+| `interactive` | `boolean` | `true` |  |
 
 ### `LoginPattern`
+
+ลายเส้นอย่างเดียว (ซ้อนบนพื้นอะไรก็ได้): เส้นคอนทัวร์โยกช้าๆ + สัญลักษณ์เล็กลอย (วง กากบาท ขีดหยัก สามเหลี่ยม) · เว้นกลางจอ
+ใช้คู่กับ LoginBackdrop (3D) หรือพื้นสีเรียบ — LoginBackdrop แบบ 2D มีลายนี้อยู่แล้ว
 
 ```ts
 LoginPattern() => Element
@@ -200,17 +210,41 @@ LoginPattern() => Element
 
 ### `AdminLoginBackdrop`
 
-```ts
-AdminLoginBackdrop() => Element
-```
+พื้นหลังหน้า login หลังบ้าน: แนวเรขาคณิต (คนละไอเดียกับฝั่งผู้ใช้) — ตารางเส้นจางขอบ · ควอเตอร์วงกลม · แคปซูล · เครือข่ายจุดที่มีสัญญาณวิ่ง
+`variant="3d"` แคปซูล/ทรงกลมมีแสงเงา ลอย · `"2d"` รูปทรงแบนสีเรียบ (แบบเดิม)
+
+
+| prop | ชนิด | ค่าตั้งต้น | คำอธิบาย |
+|---|---|---|---|
+| `variant` | `"3d" \| "2d"` | `'3d'` |  |
+| `interactive` | `boolean` | `true` |  |
 
 ### `HeroPattern`
+
+พื้นลายสำหรับแถบหัวหน้า (กรอบกว้างเตี้ย) — ลายเว้นด้านซ้ายให้ข้อความ ของเด่นอยู่ขวา
+`h` = ความสูงของแถบ (px) · `top` = เว้นด้านบน (เช่น ความสูง topbar) · `variant` 3d/2d
 
 
 | prop | ชนิด | ค่าตั้งต้น | คำอธิบาย |
 |---|---|---|---|
 | `h` | `number` | `420` |  |
 | `top` | `number` | `0` |  |
+| `variant` | `"3d" \| "2d"` | `'3d'` |  |
+| `interactive` | `boolean` | `true` |  |
+
+### type `ArtVariant`
+
+ภาพประกอบนามธรรมสำหรับพื้นหลัง (login · แถบหัวหน้า · ภาพตกแต่ง) — มีสองสไตล์ผ่าน `variant`
+- `3d` (ค่าตั้งต้น): blob/ทรงกลม/วงแหวนแบบมีแสงเงา ลอยขึ้นลงพร้อมเงาด้านล่าง · ประกายระยิบ · จุดลอยขึ้น
+- `2d`: รูปทรงแบนสีเรียบ (สไตล์ abstract banner เดิม) + ลายเส้น
+ทั้งสองแบบ: blob ค่อยๆ เปลี่ยนรูปทรง · ลอยช้าๆ · ขยับตามเมาส์เล็กน้อย (parallax ให้มีความลึก · ปิดได้ด้วย `interactive={false}`)
+- ชิ้นที่มุมยึดมุมกล่องและขนาดตามด้านที่สั้นกว่าของกล่อง (cqmin) → เต็มจอ/การ์ดเล็ก/มือถือแนวตั้ง สัดส่วนเดิม
+- สีจากโทเคน (brand / accent / accent2) จึงตามสี CI และโหมดมืด (`--blob-opacity`)
+- ผู้ใช้ตั้งลดการเคลื่อนไหว = นิ่งทั้งหมด · aria-hidden และไม่รับคลิก · กลางกล่องเว้นไว้ให้เนื้อหา
+
+```ts
+type ArtVariant = '3d' | '2d';
+```
 
 ### `BLOB_PALETTE`
 

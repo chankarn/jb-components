@@ -21,7 +21,7 @@ import { toast, confirmDialog } from '@/components/feedback';
 import { DataTable, Toolbar, FilterSelect, Pagination, Dialog, Drawer, SectionCard, StatCard, AdminPageHeader, InfoNote } from '@/components/admin/kit';
 import { RowMenu } from '@/components/admin/RowMenu';
 import { Pencil, Trash2 } from 'lucide-react';
-import { LoginBackdrop, LoginPattern, AdminLoginBackdrop, HeroPattern } from '@/components/BlobArt';
+import { BlobArt, LoginBackdrop, LoginPattern, AdminLoginBackdrop, HeroPattern } from '@/components/BlobArt';
 import { ImagePicker } from '@/components/admin/ImagePicker';
 import { OtpInput } from '@/components/OtpInput';
 import { PasswordInput, PasswordRules } from '@/components/admin/PasswordFields';
@@ -261,6 +261,7 @@ export function Gallery() {
   const [dlgLock, setDlgLock] = useState(false);
   const [role, setRole] = useState<string | null>('editor');
   const [startDate, setStartDate] = useState('');
+  const [artVariant, setArtVariant] = useState<'3d' | '2d'>('3d');
   const [teams, setTeams] = useState<string[]>(['ฝ่ายผลิต']);
   const rows = Array.from({ length: 25 }, (_, i) => ({ id: i + 1, name: `คอร์ส ${i + 1}`, st: ['published', 'draft', 'archived'][i % 3], n: (i + 1) * 7 }))
     .filter((r) => r.name.includes(q) && (!status || r.st === status));
@@ -997,10 +998,35 @@ export function Gallery() {
       </Section>
 
       <Section title="BlobArt: Backdrops / Patterns">
-        <div className="grid gap-4 sm:grid-cols-2">
-          {[['LoginBackdrop', <LoginBackdrop key="a" />], ['LoginPattern + Backdrop', <><LoginBackdrop /><LoginPattern /></>], ['AdminLoginBackdrop', <AdminLoginBackdrop key="c" />], ['HeroPattern', <HeroPattern key="d" h={220} />]].map(([n, el]) => (
-            <div key={n as string} className="relative h-56 overflow-hidden rounded-card border border-ink/10 bg-surface">{el}<span className="absolute left-3 top-3 rounded-pill bg-surface/90 px-2 py-0.5 text-[11px] font-semibold">{n as string}</span></div>
+        {/* วางแบบใช้งานจริง: พื้นหลัง login เต็มกล่อง + การ์ดตรงกลาง · HeroPattern เป็นแถบกว้างเตี้ย · ลองขยับเมาส์ (parallax) */}
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <SegmentedControl size="sm" label="สไตล์" value={artVariant} onChange={setArtVariant} options={[{ value: '3d', label: '3D' }, { value: '2d', label: '2D (แบบเดิม)' }]} />
+          <span className="text-xs text-ink-mute">ลอย · เปลี่ยนรูปทรง · ขยับตามเมาส์ (ผู้ใช้ที่ตั้งลดการเคลื่อนไหวจะเห็นแบบนิ่ง)</span>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-3">
+          {[['LoginBackdrop', <LoginBackdrop key={`a${artVariant}`} variant={artVariant} />], ['LoginPattern (ลายเส้นอย่างเดียว)', <LoginPattern key="b" />], ['AdminLoginBackdrop', <AdminLoginBackdrop key={`c${artVariant}`} variant={artVariant} />]].map(([n, el]) => (
+            <div key={n as string} className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-card border border-ink/10 bg-surface">
+              {el}
+              <div className="relative w-[46%] space-y-2 rounded-2xl bg-surface/90 p-4 shadow-lift backdrop-blur">
+                <div className="mx-auto mb-3 size-7 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700" />
+                <div className="h-2 rounded-pill bg-ink/10" /><div className="h-2 w-2/3 rounded-pill bg-ink/10" />
+                <div className="!mt-3 h-5 rounded-lg bg-brand-600" />
+              </div>
+              <span className="absolute left-3 top-3 rounded-pill bg-surface/90 px-2 py-0.5 text-[11px] font-semibold">{n as string}</span>
+            </div>
           ))}
+        </div>
+        <div className="relative mt-4 h-44 overflow-hidden rounded-card border border-ink/10 bg-surface">
+          <HeroPattern key={artVariant} h={176} variant={artVariant} />
+          <div className="relative p-6">
+            <span className="rounded-pill bg-surface/90 px-2 py-0.5 text-[11px] font-semibold">HeroPattern</span>
+            <p className="mt-3 font-display text-2xl font-semibold">สวัสดีตอนเช้า คุณนภา</p>
+            <p className="text-sm text-ink-mute">แถบหัวหน้าแรก / โปรไฟล์ · ลายเว้นด้านซ้ายไว้ให้ข้อความ</p>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-6">
+          <BlobArt variant={artVariant} className="w-56" />
+          <p className="text-sm text-ink-mute">BlobArt — ภาพประกอบเดี่ยว (หน้าว่าง · ข้างหัวข้อ · การ์ด)</p>
         </div>
       </Section>
 
